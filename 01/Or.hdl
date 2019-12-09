@@ -15,4 +15,10 @@ CHIP Or {
 
     PARTS:
     // Put your code here:
+    // https://en.wikipedia.org/wiki/NAND_logic
+
+    Nand (a=a, b=a, out=NotA);
+    Nand (a=b, b=b, out=NotB);
+    Nand (a=NotA, b=NotB, out=out);
+
 }

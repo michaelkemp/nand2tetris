@@ -15,4 +15,9 @@ CHIP And {
 
     PARTS:
     // Put your code here:
+    // https://en.wikipedia.org/wiki/NAND_logic
+
+    Nand (a=a, b=b, out=NandAB);
+    Nand (a=NandAB, b=NandAB, out=out);
+
 }

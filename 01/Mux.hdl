@@ -15,4 +15,11 @@ CHIP Mux {
 
     PARTS:
     // Put your code here:
+    // https://en.wikipedia.org/wiki/NAND_logic
+
+    Nand (a=sel, b=sel, out=NotS);
+    Nand (a=a, b=NotS, out=NandANotS);
+    Nand (a=b, b=sel, out=NandBS);
+    Nand (a=NandANotS, b=NandBS, out=out);
+
 }

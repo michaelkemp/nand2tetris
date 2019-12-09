@@ -15,4 +15,12 @@ CHIP DMux {
 
     PARTS:
     // Put your code here:
+    // https://en.wikipedia.org/wiki/NAND_logic
+
+    Nand (a=sel, b=sel, out=NotS);
+    Nand (a=sel, b=in, out=NandSI);
+    Nand (a=in, b=NotS, out=NandINotS);
+    Nand (a=NandINotS, b=NandINotS, out=a);
+    Nand (a=NandSI, b=NandSI, out=b);
+
 }

@@ -14,4 +14,8 @@ CHIP Not {
 
     PARTS:
     // Put your code here:
+    // https://en.wikipedia.org/wiki/NAND_logic
+
+    Nand (a=in, b=in, out=out);
+
 }
