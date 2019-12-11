@@ -12,3 +12,30 @@
 // the screen should remain fully clear as long as no key is pressed.
 
 // Put your code here.
+
+// LOAD 8192 into screenPointer
+@8191
+D=A
+@screenPointer
+M=D
+
+(TOP)
+
+@SCREEN
+D=A
+@screenPointer
+A=D+M           // Address of SCREEN + ScreenPointer
+M=-1            // Set this Memory address to -1 (black)
+
+@screenPointer  
+MD=M-1          // reduce the value of ScreenPointer by 1
+
+@END
+D;JLT           // Stop if ScreenPointer is less than 0
+
+@TOP
+0;JMP
+
+(END)
+@END
+0;JMP

@@ -33,17 +33,27 @@ variables = {
     'THIS'  : 3,
     'THAT'  : 4,
 }
-varval = 16;
+
+# beginning register of user defined variables
+varReg = 16;
 
 dest = {
     'null': '000',
     'M'   : '001',  
     'D'   : '010',  
     'MD'  : '011',  
+    'DM'  : '011',  
     'A'   : '100',  
     'AM'  : '101',  
+    'MA'  : '101',  
     'AD'  : '110',  
+    'DA'  : '110',  
     'AMD' : '111',   
+    'ADM' : '111',   
+    'MDA' : '111',   
+    'MAD' : '111',   
+    'DMA' : '111',   
+    'MAD' : '111',   
 }
 
 comp = {
@@ -67,14 +77,20 @@ comp = {
     'M-1' : '110010',
     'D+A' : '000010',
     'D+M' : '000010',
+    'A+D' : '000010',
+    'M+D' : '000010',
     'D-A' : '010011',
     'D-M' : '010011',
     'A-D' : '000111',
     'M-D' : '000111',
     'D&A' : '000000',
     'D&M' : '000000',
+    'A&D' : '000000',
+    'M&D' : '000000',
     'D|A' : '010101',
     'D|M' : '010101',
+    'A|D' : '010101',
+    'M|D' : '010101',
 }
 
 jump = {
@@ -136,7 +152,7 @@ def main(asmFile):
 
 
 def acom(command):
-    global varval
+    global varReg
     cmd = command[1:]
     try:
         val = int(cmd)
@@ -145,9 +161,9 @@ def acom(command):
         if cmd in variables:
             address = '{0:016b}'.format(int(variables[cmd]))
         else:
-            variables[cmd] = varval
-            address = '{0:016b}'.format(varval)
-            varval += 1
+            variables[cmd] = varReg
+            address = '{0:016b}'.format(varReg)
+            varReg += 1
 
     return address
 
