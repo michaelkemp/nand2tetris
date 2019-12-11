@@ -13,29 +13,60 @@
 
 // Put your code here.
 
-// LOAD 8192 into screenPointer
-@8191
-D=A
-@screenPointer
-M=D
+// Check for keypress
+(CHECKKBD)
+@KBD
+D=M         // id D == 0, no key is pressed
+@NOKEY
+D;JEQ 
 
-(TOP)
+(KEY)       // a key was pressed, set R0 to -1 (paint black)
+@R0
+M=-1
+@PAINT
+0;JMP
 
+(NOKEY)     // no key pressed, set R0 to 0 (paint white)
+@R0
+M=0
+
+(PAINT)
+// put BEGIN screen address into screenBEG
 @SCREEN
 D=A
-@screenPointer
-A=D+M           // Address of SCREEN + ScreenPointer
-M=-1            // Set this Memory address to -1 (black)
+@screenBEG
+M=D
 
-@screenPointer  
-MD=M-1          // reduce the value of ScreenPointer by 1
+// put END screen address into screenEND
+@SCREEN
+D=A
+@8192
+D=D+A
+@screenEND
+M=D
 
-@END
-D;JLT           // Stop if ScreenPointer is less than 0
+// load screenBEG into R0
+@screenBEG
+D=M
+@upto
+M=D
 
-@TOP
+(COLOR)
+@R0         // Get color from R0
+D=M
+@upto       // get screen location
+A=M     
+M=D         // set screen location color
+@upto       // increment screen location
+M=M+1
+
+@upto       // if upto == screenEND finish the loop
+D=M
+@screenEND  
+D=D-M
+@CHECKKBD
+D;JEQ
+
+@COLOR
 0;JMP
 
-(END)
-@END
-0;JMP
