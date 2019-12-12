@@ -40,4 +40,35 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+
+    ALU (x=outD, y=outMux2, 
+        zx=instruction[11], nx=instruction[10], zy=instruction[9], 
+        ny=instruction[8],  f=instruction[7],   no=instruction[6], 
+        out=outALU, out=outM, zr=Zero, ng=Neg );
+
+    Not (in=instruction[15], out=isA);
+    Not (in=isA, out=isC);
+
+    And (a=isC, b=instruction[3], out=writeM);
+    And (a=isC, b=instruction[4], out=writeD);
+    Or  (a=isA, b=instruction[5], out=writeA);
+    
+    Mux16 (a=outALU, b=instruction, sel=isA, out=outMux1);
+    ARegister (in=outMux1, load=writeA, out=outA, out[0..14]=addressM);
+
+    DRegister (in=outALU, load=writeD, out=outD);
+    Mux16 (a=outA, b=inM, sel=instruction[12], out=outMux2);
+
+    // JUMPS and the PC
+    Or (a=Zero, b=Neg, out=LTE);
+    Not (in=LTE, out=GT);
+    And (a=Zero, b=instruction[1], out=JEQ);
+    And (a=Neg, b=instruction[2], out=JLT);
+    And (a=GT, b=instruction[0], out=JGT);
+    Or (a=JLT, b=JGT, out=JLTorJGT);
+    Or (a=JLTorJGT, b=JEQ, out=JMP);
+    And (a=isC, b=JMP, out=LoadPC);
+    Not (in=LoadPC, out=IncPC);
+    PC (in=outA, load=LoadPC, inc=IncPC, reset=reset, out[0..14]=pc);
+
 }
