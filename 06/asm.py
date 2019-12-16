@@ -35,7 +35,7 @@ variables = {
 }
 
 # beginning register of user defined variables
-varReg = 16;
+varReg = 16
 
 dest = {
     'null': '000',
@@ -107,6 +107,10 @@ jump = {
 def main(asmFile):
 
     filePath, fileName = os.path.split(asmFile)
+    filePre, fileExt = os.path.splitext(fileName)
+    if fileExt != ".asm":
+        print("File type must be .asm")
+        exit(0)
 
     with open(asmFile) as fp:
         prog = fp.readlines()
@@ -114,7 +118,7 @@ def main(asmFile):
         for line in prog:
             
             # remove leading and training space
-            line = line.strip();
+            line = line.strip()
 
             # skip blank lines
             if line == "":
@@ -144,8 +148,7 @@ def main(asmFile):
         else:
             hack.append(ccom(command))
 
-    fileName = fileName.replace(".asm",".hack")
-    hackPath = os.path.join(filePath, fileName)
+    hackPath = os.path.join(filePath, filePre + ".hack")
     with open(hackPath, 'w') as hackFile:
         hackFile.write('\n'.join(hack))
         print("Done")
