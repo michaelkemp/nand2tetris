@@ -5,8 +5,12 @@ import os.path
 from os import path
 import re
 
+staticName = "static"
+
 vm = []
 asm = []
+
+disordat = {'0':'THIS', '1':'THAT'}
 
 segNames = {
     'local' :       'LCL',
@@ -17,8 +21,12 @@ segNames = {
 
 
 def main(vmFile):
+    global staticName
+
     filePath, fileName = os.path.split(vmFile)
     filePre, fileExt = os.path.splitext(fileName)
+    staticName = filePre
+
     if fileExt != ".vm":
         print("File type must be .vm")
         exit(0)
@@ -239,14 +247,34 @@ def segPop(segment, variable): # local, argument, this, that
 
 
 def staticPush(variable): # static -- filename.i
-    # ?
-    return "staticPush"
+    tmp = staticName + "." + variable
+    return """
+        // *SP = *static
+        @{}
+        D=M
+        @SP
+        A=M
+        M=D
+
+        // SP++
+        @SP
+        M=M+1
+    """.format(tmp)
 
 def staticPop(variable): # static -- filename.i
-    # D = stack.pop
-    # @foo.i
-    # M=D
-    return "staticPop"
+    tmp = staticName + "." + variable
+    return """
+        // SP--
+        @SP
+        M=M-1
+
+        // *static = *SP
+        @SP
+        A=M
+        D=M
+        @{}
+        M=D
+    """.format(tmp)
 
 def tempPush(variable): # temp -- R5 - R12
     return """
@@ -295,12 +323,33 @@ def tempPop(variable): # temp -- R5 - R12
     """.format(variable)
 
 def pointerPush(variable): # pointer -- 0/1 THIS/THAT
-    # *SP = THIS/THAT, SP++
-    return "pointerPush"
+    return """
+        // *SP = THIS/THAT
+        @{}
+        D=M
+        @SP
+        A=M
+        M=D
+
+        // SP++
+        @SP
+        M=M+1
+    """.format(disordat[variable])
 
 def pointerPop(variable): # pointer -- 0/1 THIS/THAT
-    # SP--, *SP =  THIS/THAT
-    return "pointerPop"
+    return """
+        // SP--
+        @SP
+        M=M-1
+
+        // THIS/THAT = *SP
+        @SP
+        A=M
+        M=D
+        @{}
+        M=D
+    """.format(disordat[variable])
+
 
 def constantPush(variable): # constant
     return """
