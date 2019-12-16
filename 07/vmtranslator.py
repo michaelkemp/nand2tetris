@@ -124,7 +124,7 @@ def pushpop(command, segment, variable):
         exit(0)
 
 
-def mathlogic(command): # add, sub, neg, eq, get, lt, and, or, not
+def mathlogic(command): # add, sub, neg, eq, gt, lt, and, or, not
     #return "//"
     if command == "add":
         return """
@@ -180,6 +180,152 @@ def mathlogic(command): # add, sub, neg, eq, get, lt, and, or, not
             A=M
             M=D
 
+            // SP++
+            @SP
+            M=M+1
+        """
+    elif command == "neg":
+        return """
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP
+            @SP
+            A=M
+            D=M
+
+            // *SP = D
+            @SP
+            A=M
+            M=-D
+
+            // SP++
+            @SP
+            M=M+1
+        """
+    elif command == "eq":
+        return """
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP
+            @SP
+            A=M
+            D=M
+
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP - D
+            @SP
+            A=M
+            D=M-D
+            @true
+            D;JEQ
+            
+            (false)
+            // *SP = 0
+            @SP
+            A=M
+            M=0
+
+            @end
+            0;JMP
+
+            (true)
+            // *SP = -1
+            @SP
+            A=M
+            M=-1
+
+            (end)
+            // SP++
+            @SP
+            M=M+1
+        """
+    elif command == "gt":
+        return """
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP
+            @SP
+            A=M
+            D=M
+
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP - D
+            @SP
+            A=M
+            D=M-D
+            @true
+            D;JGT
+            
+            (false)
+            // *SP = 0
+            @SP
+            A=M
+            M=0
+
+            @end
+            0;JMP
+
+            (true)
+            // *SP = -1
+            @SP
+            A=M
+            M=-1
+
+            (end)
+            // SP++
+            @SP
+            M=M+1
+        """
+    elif command == "lt":
+        return """
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP
+            @SP
+            A=M
+            D=M
+
+            // SP--
+            @SP
+            M=M-1
+
+            // D = *SP - D
+            @SP
+            A=M
+            D=M-D
+            @true
+            D;JLT
+            
+            (false)
+            // *SP = 0
+            @SP
+            A=M
+            M=0
+
+            @end
+            0;JMP
+
+            (true)
+            // *SP = -1
+            @SP
+            A=M
+            M=-1
+
+            (end)
             // SP++
             @SP
             M=M+1
