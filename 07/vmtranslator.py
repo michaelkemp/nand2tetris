@@ -6,6 +6,7 @@ from os import path
 import re
 
 staticName = "static"
+jmpCnt = 0
 
 vm = []
 asm = []
@@ -21,7 +22,6 @@ segNames = {
 
 def main(vmFile):
     global staticName
-    jmpCnt = 0
 
     filePath, fileName = os.path.split(vmFile)
     filePre, fileExt = os.path.splitext(fileName)
@@ -81,14 +81,11 @@ def main(vmFile):
         elif expression == "neg":
             asm.append(mathNeg())
         elif expression == "eq":
-            asm.append(mathEQ(jmpCnt))
-            jmpCnt = jmpCnt + 1
+            asm.append(mathEQ())
         elif expression == "gt":
-            asm.append(mathGT(jmpCnt))
-            jmpCnt = jmpCnt + 1
+            asm.append(mathGT())
         elif expression == "lt":
-            asm.append(mathLT(jmpCnt))
-            jmpCnt = jmpCnt + 1
+            asm.append(mathLT())
         elif expression == "and":
             asm.append(logicAnd())
         elif expression == "or":
@@ -128,294 +125,230 @@ def pushpop(command, segment, variable):
         print("Error: {}, {}, {}".format(command, segment, variable))
         exit(0)
 
+def pop2Funct(funct):
+    tmp = ""
+    
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    # D = *SP
+    tmp += "@SP,A=M,D=M,"
+
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    if funct == "add":          # D = *SP + D
+        tmp += "@SP,A=M,D=M+D,"
+    elif funct == "sub":        # D = *SP - D
+        tmp += "@SP,A=M,D=M-D,"
+    elif funct == "and":        # D = *SP & D
+        tmp += "@SP,A=M,D=M&D,"
+    elif funct == "or":         # D = *SP | D
+        tmp += "@SP,A=M,D=M|D,"
+
+    # *SP = D
+    tmp += "@SP,A=M,M=D,"
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
+
 def mathAdd():
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP + D
-        @SP
-        A=M
-        D=M+D
-
-        // *SP = D
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """
+    return pop2Funct("add")
 
 def mathSub():
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP - D
-        @SP
-        A=M
-        D=M-D
-
-        // *SP = D
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """
-
-def mathNeg():
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // *SP = D
-        @SP
-        A=M
-        M=-D
-
-        // SP++
-        @SP
-        M=M+1
-    """
-
-def mathEQ(jmp):
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP - D
-        @SP
-        A=M
-        D=M-D
-        @true-{}
-        D;JEQ
-        
-        // *SP = 0
-        @SP
-        A=M
-        M=0
-
-        @end-{}
-        0;JMP
-
-        (true-{})
-        // *SP = -1
-        @SP
-        A=M
-        M=-1
-
-        (end-{})
-        // SP++
-        @SP
-        M=M+1
-    """.format(jmp,jmp,jmp,jmp)
-
-def mathGT(jmp):
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP - D
-        @SP
-        A=M
-        D=M-D
-        @true-{}
-        D;JGT
-        
-        // *SP = 0
-        @SP
-        A=M
-        M=0
-
-        @end-{}
-        0;JMP
-
-        (true-{})
-        // *SP = -1
-        @SP
-        A=M
-        M=-1
-
-        (end-{})
-        // SP++
-        @SP
-        M=M+1
-    """.format(jmp,jmp,jmp,jmp)
-
-def mathLT(jmp):
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP - D
-        @SP
-        A=M
-        D=M-D
-        @true-{}
-        D;JLT
-        
-        // *SP = 0
-        @SP
-        A=M
-        M=0
-
-        @end-{}
-        0;JMP
-
-        (true-{})
-        // *SP = -1
-        @SP
-        A=M
-        M=-1
-
-        (end-{})
-        // SP++
-        @SP
-        M=M+1
-    """.format(jmp,jmp,jmp,jmp)
-
+    return pop2Funct("sub")
 
 def logicAnd():
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP
-        @SP
-        A=M
-        D=M
-
-        // SP--
-        @SP
-        M=M-1
-
-        // D = *SP & D
-        @SP
-        A=M
-        D=M&D
-
-        // *SP = D
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """
+    return pop2Funct("and")
 
 def logicOr():
-    return """
-        // SP--
-        @SP
-        M=M-1
+    return pop2Funct("or")
 
-        // D = *SP
-        @SP
-        A=M
-        D=M
+def pop1Funct(funct):
+    tmp = ""
+    
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
 
-        // SP--
-        @SP
-        M=M-1
+    # D = *SP
+    tmp += "@SP,A=M,D=M,"
 
-        // D = *SP | D
-        @SP
-        A=M
-        D=M|D
+    if funct == "neg":          # *SP = -D
+        tmp += "@SP,A=M,M=-D,"
+    elif funct == "not":        # *SP = !D
+        tmp += "@SP,A=M,M=!D,"
 
-        // *SP = D
-        @SP
-        A=M
-        M=D
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
 
-        // SP++
-        @SP
-        M=M+1
-    """
+    return tmp.replace(",","\n")
+
+
+def mathNeg():
+    return pop1Funct("neg")
 
 def logicNot():
-    return """
-        // SP--
-        @SP
-        M=M-1
+    return pop1Funct("not")
 
-        // D = *SP
-        @SP
-        A=M
-        D=M
+def pop2Bool(test):
+    global jmpCnt
+    tmp = ""
 
-        // *SP = !D
-        @SP
-        A=M
-        M=!D
+    # Pop top 2 items off the stack and subtract them: SP--, D = *SP, SP--, D = *SP - D
+    tmp += "@SP,M=M-1,@SP,A=M,D=M,@SP,M=M-1,@SP,A=M,D=M-D,"
 
-        // SP++
-        @SP
-        M=M+1
-    """
+    if test == "eq":                # Jump to (true-i) if D == 0
+        tmp += "@true-{},D;JEQ,".format(jmpCnt) 
+    elif test == "gt":              # Jump to (true-i) if D > 0
+        tmp += "@true-{},D;JGT,".format(jmpCnt)
+    elif test == "lt":              # Jump to (true-i) if D < 0
+        tmp += "@true-{},D;JLT,".format(jmpCnt)
+
+    # if NOT true, put 0 on the stack
+    tmp += "@SP,A=M,M=0,"
+
+    # goto end-i    
+    tmp += "@end-{},0;JMP,".format(jmpCnt)  
+        
+    # if true, put -1 on stack
+    tmp += "(true-{}),@SP,A=M,M=-1,".format(jmpCnt)
+
+    # end-i, Increment SP
+    tmp += "(end-{}),@SP,M=M+1,".format(jmpCnt)
+
+    jmpCnt += 1
+
+    return tmp.replace(",","\n")
+
+
+def mathEQ():
+    return pop2Bool("eq")
+
+def mathGT():
+    return pop2Bool("gt")
+
+def mathLT():
+    return pop2Bool("lt")
+
+
+def segPush(segment, variable): # local, argument, this, that
+    tmp = ""
+
+    # addr = segmentPointer+i
+    tmp += "@{},D=M,@{},D=D+A,@R13,M=D,".format(segNames[segment],variable)
+
+    # *SP = *addr
+    tmp += "@R13,A=M,D=M,@SP,A=M,M=D,"
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
+
+def segPop(segment, variable): # local, argument, this, that
+    tmp = ""
+
+    # addr = segmentPointer+i
+    tmp += "@{},D=M,@{},D=D+A,@R13,M=D,".format(segNames[segment],variable)
+
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    # *addr = *SP
+    tmp += "@SP,A=M,D=M,@R13,A=M,M=D,"
+
+    return tmp.replace(",","\n")
+
+
+
+def staticPush(variable): # static -- filename.i
+    global staticName
+    tmp = ""
+
+    # *SP = *static
+    tmp += "@{},D=M,@SP,A=M,M=D,".format(staticName + "." + variable)
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
+
+def staticPop(variable): # static -- filename.i
+    global staticName
+    tmp = ""
+
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    # *static = *SP
+    tmp += "@SP,A=M,D=M,@{},M=D,".format(staticName + "." + variable)
+
+    return tmp.replace(",","\n")
+
+
+def tempPush(variable): # temp -- R5 - R12
+    tmp = ""
+
+    # addr = R5+i
+    tmp += "@R5,D=A,@{},D=D+A,@R13,M=D,".format(variable)
+
+    # *SP = *addr
+    tmp += "@R13,A=M,D=M,@SP,A=M,M=D,"
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
+
+def tempPop(variable): # temp -- R5 - R12
+    tmp = ""
+
+    # addr = R5+i
+    tmp += "@R5,D=A,@{},D=D+A,@R13,M=D,".format(variable)
+
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    # *addr = *SP
+    tmp += "@SP,A=M,D=M,@R13,A=M,M=D,"
+
+    return tmp.replace(",","\n")
+
+
+def pointerPush(variable): # pointer -- 0/1 THIS/THAT
+    tmp = ""
+
+    # *SP = THIS/THAT
+    tmp += "@{},D=M,@SP,A=M,M=D,".format(disordat[variable])
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
+
+def pointerPop(variable): # pointer -- 0/1 THIS/THAT
+    tmp = ""
+
+    # Decrement the Stack Pointer
+    tmp += "@SP,M=M-1,"
+
+    # THIS/THAT = *SP
+    tmp += "@SP,A=M,M=D,@{},M=D,".format(disordat[variable])
+
+    return tmp.replace(",","\n")
+
+def constantPush(variable): # constant
+    tmp = ""
+
+    # *SP = i
+    tmp += "@{},D=A,@SP,A=M,M=D,".format(variable)
+
+    # Increment the Stack Pointer
+    tmp += "@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
 
 def branch(command, label):
     return "branch"
@@ -428,172 +361,6 @@ def fnctCall(command, functionName, nArgs):
 
 def returnFC():
     return "return"
-
-def segPush(segment, variable): # local, argument, this, that
-    return """
-        // addr = segmentPointer+i
-        @{}
-        D=M
-        @{}
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """.format(segNames[segment],variable)
-
-def segPop(segment, variable): # local, argument, this, that
-    return """
-        // addr = segmentPointer+i
-        @{}
-        D=M
-        @{}
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    """.format(segNames[segment],variable)
-
-
-def staticPush(variable): # static -- filename.i
-    tmp = staticName + "." + variable
-    return """
-        // *SP = *static
-        @{}
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """.format(tmp)
-
-def staticPop(variable): # static -- filename.i
-    tmp = staticName + "." + variable
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // *static = *SP
-        @SP
-        A=M
-        D=M
-        @{}
-        M=D
-    """.format(tmp)
-
-def tempPush(variable): # temp -- R5 - R12
-    return """
-        // addr = R5+i
-        @R5
-        D=A
-        @{}
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """.format(variable)
-
-def tempPop(variable): # temp -- R5 - R12
-    return """
-        // addr = R5+i
-        @R5
-        D=A
-        @{}
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    """.format(variable)
-
-def pointerPush(variable): # pointer -- 0/1 THIS/THAT
-    return """
-        // *SP = THIS/THAT
-        @{}
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """.format(disordat[variable])
-
-def pointerPop(variable): # pointer -- 0/1 THIS/THAT
-    return """
-        // SP--
-        @SP
-        M=M-1
-
-        // THIS/THAT = *SP
-        @SP
-        A=M
-        M=D
-        @{}
-        M=D
-    """.format(disordat[variable])
-
-
-def constantPush(variable): # constant
-    return """
-        // *SP = i
-        @{}
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    """.format(variable)
 
 
 if __name__ == "__main__":

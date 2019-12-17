@@ -1,522 +1,355 @@
 // push constant 10
+@10
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @10
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // pop local 0
+@LCL
+D=M
+@0
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @LCL
-        D=M
-        @0
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // push constant 21
+@21
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @21
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // push constant 22
+@22
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @22
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // pop argument 2
+@ARG
+D=M
+@2
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @ARG
-        D=M
-        @2
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // pop argument 1
+@ARG
+D=M
+@1
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @ARG
-        D=M
-        @1
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // push constant 36
+@36
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @36
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // pop this 6
+@THIS
+D=M
+@6
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @THIS
-        D=M
-        @6
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // push constant 42
+@42
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @42
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // push constant 45
+@45
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @45
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // pop that 5
+@THAT
+D=M
+@5
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @THAT
-        D=M
-        @5
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // pop that 2
+@THAT
+D=M
+@2
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = segmentPointer+i
-        @THAT
-        D=M
-        @2
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // push constant 510
+@510
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // *SP = i
-        @510
-        D=A
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // pop temp 6
+@R5
+D=A
+@6
+D=D+A
+@R13
+M=D
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@R13
+A=M
+M=D
 
-        // addr = R5+i
-        @R5
-        D=A
-        @6
-        D=D+A
-        @R13
-        M=D
-
-        // SP--
-        @SP
-        M=M-1
-
-        // *addr = *SP
-        @SP
-        A=M
-        D=M
-        @R13
-        A=M
-        M=D
-    
 // push local 0
+@LCL
+D=M
+@0
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = segmentPointer+i
-        @LCL
-        D=M
-        @0
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // push that 5
+@THAT
+D=M
+@5
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = segmentPointer+i
-        @THAT
-        D=M
-        @5
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // add
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=M+D
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP
-            @SP
-            A=M
-            D=M
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP + D
-            @SP
-            A=M
-            D=M+D
-
-            // *SP = D
-            @SP
-            A=M
-            M=D
-
-            // SP++
-            @SP
-            M=M+1
-        
 // push argument 1
+@ARG
+D=M
+@1
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = segmentPointer+i
-        @ARG
-        D=M
-        @1
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // sub
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=M-D
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP
-            @SP
-            A=M
-            D=M
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
-
-            // *SP = D
-            @SP
-            A=M
-            M=D
-
-            // SP++
-            @SP
-            M=M+1
-        
 // push this 6
+@THIS
+D=M
+@6
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = segmentPointer+i
-        @THIS
-        D=M
-        @6
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // push this 6
+@THIS
+D=M
+@6
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = segmentPointer+i
-        @THIS
-        D=M
-        @6
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // add
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=M+D
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP
-            @SP
-            A=M
-            D=M
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP + D
-            @SP
-            A=M
-            D=M+D
-
-            // *SP = D
-            @SP
-            A=M
-            M=D
-
-            // SP++
-            @SP
-            M=M+1
-        
 // sub
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=M-D
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP
-            @SP
-            A=M
-            D=M
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
-
-            // *SP = D
-            @SP
-            A=M
-            M=D
-
-            // SP++
-            @SP
-            M=M+1
-        
 // push temp 6
+@R5
+D=A
+@6
+D=D+A
+@R13
+M=D
+@R13
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
 
-        // addr = R5+i
-        @R5
-        D=A
-        @6
-        D=D+A
-        @R13
-        M=D
-
-        // *SP = *addr
-        @R13
-        A=M
-        D=M
-        @SP
-        A=M
-        M=D
-
-        // SP++
-        @SP
-        M=M+1
-    
 // add
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP
-            @SP
-            A=M
-            D=M
-
-            // SP--
-            @SP
-            M=M-1
-
-            // D = *SP + D
-            @SP
-            A=M
-            D=M+D
-
-            // *SP = D
-            @SP
-            A=M
-            M=D
-
-            // SP++
-            @SP
-            M=M+1
-        
+@SP
+M=M-1
+@SP
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=M+D
+@SP
+A=M
+M=D
+@SP
+M=M+1
