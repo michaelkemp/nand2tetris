@@ -19,9 +19,9 @@ segNames = {
     'that' :        'THAT'
 }
 
-
 def main(vmFile):
     global staticName
+    jmpCnt = 0
 
     filePath, fileName = os.path.split(vmFile)
     filePre, fileExt = os.path.splitext(fileName)
@@ -61,38 +61,43 @@ def main(vmFile):
         asm.append("// " + expression)
 
         if expression.startswith("push") or expression.startswith("pop"):
-            try:
-                command, segment, variable = expression.split(" ")
-                asm.append(pushpop(command, segment, variable))
-            except:
-                print("Syntax Error: " + expression)
-                exit(0)
+            command, segment, variable = expression.split(" ")
+            asm.append(pushpop(command, segment, variable))
         elif expression.startswith("label") or expression.startswith("goto") or expression.startswith("if-goto"):
-            try:
-                command, label = expression.split(" ")
-                asm.append(branch(command, label))
-            except:
-                print("Syntax Error: " + expression)
-                exit(0)
+            command, label = expression.split(" ")
+            asm.append(branch(command, label))
         elif expression.startswith("function"):
-            try:
-                command, functionName, nVars = expression.split(" ")
-                asm.append(fnctFunction(command, functionName, nVars))
-            except:
-                print("Syntax Error: " + expression)
-                exit(0)
+            command, functionName, nVars = expression.split(" ")
+            asm.append(fnctFunction(command, functionName, nVars))
         elif expression.startswith("call"):
-            try:
-                command, functionName, nArgs = expression.split(" ")
-                asm.append(fnctCall(command, functionName, nArgs))
-            except:
-                print("Syntax Error: " + expression)
-                exit(0)
+            command, functionName, nArgs = expression.split(" ")
+            asm.append(fnctCall(command, functionName, nArgs))
         elif expression == "return":
             asm.append(returnFC())
+        elif expression == "add":
+            asm.append(mathAdd())
+        elif expression == "sub":
+            asm.append(mathSub())
+        elif expression == "neg":
+            asm.append(mathNeg())
+        elif expression == "eq":
+            asm.append(mathEQ(jmpCnt))
+            jmpCnt = jmpCnt + 1
+        elif expression == "gt":
+            asm.append(mathGT(jmpCnt))
+            jmpCnt = jmpCnt + 1
+        elif expression == "lt":
+            asm.append(mathLT(jmpCnt))
+            jmpCnt = jmpCnt + 1
+        elif expression == "and":
+            asm.append(logicAnd())
+        elif expression == "or":
+            asm.append(logicOr())
+        elif expression == "not":
+            asm.append(logicNot())
         else:
-            command = expression
-            asm.append(mathlogic(command))
+            print("Unknown command: " + expression)
+            exit(0)
 
     asmPath = os.path.join(filePath, filePre + ".asm")
     with open(asmPath, 'w') as asmFile:
@@ -123,215 +128,294 @@ def pushpop(command, segment, variable):
         print("Error: {}, {}, {}".format(command, segment, variable))
         exit(0)
 
+def mathAdd():
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-def mathlogic(command): # add, sub, neg, eq, gt, lt, and, or, not
-    #return "//"
-    if command == "add":
-        return """
-            // SP--
-            @SP
-            M=M-1
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+        // SP--
+        @SP
+        M=M-1
 
-            // SP--
-            @SP
-            M=M-1
+        // D = *SP + D
+        @SP
+        A=M
+        D=M+D
 
-            // D = *SP + D
-            @SP
-            A=M
-            D=M+D
+        // *SP = D
+        @SP
+        A=M
+        M=D
 
-            // *SP = D
-            @SP
-            A=M
-            M=D
+        // SP++
+        @SP
+        M=M+1
+    """
 
-            // SP++
-            @SP
-            M=M+1
-        """
-    elif command == "sub":
-        return """
-            // SP--
-            @SP
-            M=M-1
+def mathSub():
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            // SP--
-            @SP
-            M=M-1
+        // SP--
+        @SP
+        M=M-1
 
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
+        // D = *SP - D
+        @SP
+        A=M
+        D=M-D
 
-            // *SP = D
-            @SP
-            A=M
-            M=D
+        // *SP = D
+        @SP
+        A=M
+        M=D
 
-            // SP++
-            @SP
-            M=M+1
-        """
-    elif command == "neg":
-        return """
-            // SP--
-            @SP
-            M=M-1
+        // SP++
+        @SP
+        M=M+1
+    """
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+def mathNeg():
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-            // *SP = D
-            @SP
-            A=M
-            M=-D
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            // SP++
-            @SP
-            M=M+1
-        """
-    elif command == "eq":
-        return """
-            // SP--
-            @SP
-            M=M-1
+        // *SP = D
+        @SP
+        A=M
+        M=-D
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+        // SP++
+        @SP
+        M=M+1
+    """
 
-            // SP--
-            @SP
-            M=M-1
+def mathEQ(jmp):
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
-            @true
-            D;JEQ
-            
-            (false)
-            // *SP = 0
-            @SP
-            A=M
-            M=0
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            @end
-            0;JMP
+        // SP--
+        @SP
+        M=M-1
 
-            (true)
-            // *SP = -1
-            @SP
-            A=M
-            M=-1
+        // D = *SP - D
+        @SP
+        A=M
+        D=M-D
+        @true-{}
+        D;JEQ
+        
+        // *SP = 0
+        @SP
+        A=M
+        M=0
 
-            (end)
-            // SP++
-            @SP
-            M=M+1
-        """
-    elif command == "gt":
-        return """
-            // SP--
-            @SP
-            M=M-1
+        @end-{}
+        0;JMP
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+        (true-{})
+        // *SP = -1
+        @SP
+        A=M
+        M=-1
 
-            // SP--
-            @SP
-            M=M-1
+        (end-{})
+        // SP++
+        @SP
+        M=M+1
+    """.format(jmp,jmp,jmp,jmp)
 
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
-            @true
-            D;JGT
-            
-            (false)
-            // *SP = 0
-            @SP
-            A=M
-            M=0
+def mathGT(jmp):
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-            @end
-            0;JMP
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            (true)
-            // *SP = -1
-            @SP
-            A=M
-            M=-1
+        // SP--
+        @SP
+        M=M-1
 
-            (end)
-            // SP++
-            @SP
-            M=M+1
-        """
-    elif command == "lt":
-        return """
-            // SP--
-            @SP
-            M=M-1
+        // D = *SP - D
+        @SP
+        A=M
+        D=M-D
+        @true-{}
+        D;JGT
+        
+        // *SP = 0
+        @SP
+        A=M
+        M=0
 
-            // D = *SP
-            @SP
-            A=M
-            D=M
+        @end-{}
+        0;JMP
 
-            // SP--
-            @SP
-            M=M-1
+        (true-{})
+        // *SP = -1
+        @SP
+        A=M
+        M=-1
 
-            // D = *SP - D
-            @SP
-            A=M
-            D=M-D
-            @true
-            D;JLT
-            
-            (false)
-            // *SP = 0
-            @SP
-            A=M
-            M=0
+        (end-{})
+        // SP++
+        @SP
+        M=M+1
+    """.format(jmp,jmp,jmp,jmp)
 
-            @end
-            0;JMP
+def mathLT(jmp):
+    return """
+        // SP--
+        @SP
+        M=M-1
 
-            (true)
-            // *SP = -1
-            @SP
-            A=M
-            M=-1
+        // D = *SP
+        @SP
+        A=M
+        D=M
 
-            (end)
-            // SP++
-            @SP
-            M=M+1
-        """
+        // SP--
+        @SP
+        M=M-1
 
-    return "     //" + command
+        // D = *SP - D
+        @SP
+        A=M
+        D=M-D
+        @true-{}
+        D;JLT
+        
+        // *SP = 0
+        @SP
+        A=M
+        M=0
+
+        @end-{}
+        0;JMP
+
+        (true-{})
+        // *SP = -1
+        @SP
+        A=M
+        M=-1
+
+        (end-{})
+        // SP++
+        @SP
+        M=M+1
+    """.format(jmp,jmp,jmp,jmp)
+
+
+def logicAnd():
+    return """
+        // SP--
+        @SP
+        M=M-1
+
+        // D = *SP
+        @SP
+        A=M
+        D=M
+
+        // SP--
+        @SP
+        M=M-1
+
+        // D = *SP & D
+        @SP
+        A=M
+        D=M&D
+
+        // *SP = D
+        @SP
+        A=M
+        M=D
+
+        // SP++
+        @SP
+        M=M+1
+    """
+
+def logicOr():
+    return """
+        // SP--
+        @SP
+        M=M-1
+
+        // D = *SP
+        @SP
+        A=M
+        D=M
+
+        // SP--
+        @SP
+        M=M-1
+
+        // D = *SP | D
+        @SP
+        A=M
+        D=M|D
+
+        // *SP = D
+        @SP
+        A=M
+        M=D
+
+        // SP++
+        @SP
+        M=M+1
+    """
+
+def logicNot():
+    return """
+        // SP--
+        @SP
+        M=M-1
+
+        // D = *SP
+        @SP
+        A=M
+        D=M
+
+        // *SP = !D
+        @SP
+        A=M
+        M=!D
+
+        // SP++
+        @SP
+        M=M+1
+    """
 
 def branch(command, label):
     return "branch"
