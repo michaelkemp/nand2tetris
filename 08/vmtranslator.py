@@ -51,7 +51,6 @@ def main(vmFile):
             parts=re.split("//", line)
             line = re.sub("\s+", " ", parts[0]).strip()
 
-
             linecount += 1
 
             vm.append(line)
@@ -100,7 +99,6 @@ def main(vmFile):
     with open(asmPath, 'w') as asmFile:
         asmFile.write('\n'.join(asm))
         print("Done")
-
 
 def pushpop(command, segment, variable):
     if command == 'push' and segment in {'local', 'argument', 'this', 'that'}:
@@ -185,7 +183,6 @@ def pop1Funct(funct):
 
     return tmp.replace(",","\n")
 
-
 def mathNeg():
     return pop1Funct("neg")
 
@@ -222,7 +219,6 @@ def pop2Bool(test):
 
     return tmp.replace(",","\n")
 
-
 def mathEQ():
     return pop2Bool("eq")
 
@@ -231,7 +227,6 @@ def mathGT():
 
 def mathLT():
     return pop2Bool("lt")
-
 
 def segPush(segment, variable): # local, argument, this, that
     tmp = ""
@@ -260,8 +255,6 @@ def segPop(segment, variable): # local, argument, this, that
     tmp += "@SP,A=M,D=M,@R13,A=M,M=D,"
 
     return tmp.replace(",","\n")
-
-
 
 def staticPush(variable): # static -- filename.i
     global staticName
@@ -366,13 +359,36 @@ def branch(command, label):
 
     return tmp.replace(",","\n")
 
-def fnctFunction(command, functionName, nVars):
-    return "fnctFunction"
-
 def fnctCall(command, functionName, nArgs):
+    # push returnAddress        // using the LABEL declared below eg Foo$ret.1
+    # push LCL                  // save LCL of caller
+    # push ARG                  // save ARG of caller
+    # push THIS                 // save THIS of caller
+    # push THAT                 // save THAT of caller
+    # ARG = SP - 5 - nArgs      // reposition ARG for callee
+    # LCL = SP                  // reposition LCL for callee
+    # goto functionName         // transfer controll to the called function
+    # (returnAddress)           // Declare lable for the return-address
+
     return "fnctCall"
 
+def fnctFunction(command, functionName, nVars):
+    # (functionName)            // declare LABEL for function entry
+    # push 0 NVars times        // nVars are the number of local variables, initialize to 0
+
+    return "fnctFunction"
+
 def returnFC():
+    # endFrame = LCL            // endFrame is a temporary variable
+    # retAddr = *(endFrame -5)  // gets the return address (retAddr another temp var)
+    # *ARG = pop()              // put return value into AGR[0]
+    # SP = ARG + 1              // reposition SP
+    # THAT = *(endFrame - 1)    // restore THAT to caller
+    # THIS = *(endFrame - 2)    // restore THIS to caller
+    # ARG  = *(endFrame - 3)    // restore ARG to caller
+    # LCL  = *(endFrame - 4)    // restore LCL to caller
+    # goto retAddr              // jump to return address in callers code 
+    
     return "return"
 
 
