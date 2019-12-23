@@ -7,6 +7,7 @@ import re
 
 staticName = "static"
 jmpCnt = 0
+retCnt = 0
 
 vm = []
 asm = []
@@ -21,15 +22,6 @@ segNames = {
 }
 
 def main(vmFile):
-    global staticName
-
-    filePath, fileName = os.path.split(vmFile)
-    filePre, fileExt = os.path.splitext(fileName)
-    staticName = filePre
-
-    if fileExt != ".vm":
-        print("File type must be .vm")
-        exit(0)
 
     with open(vmFile) as fp:
         prog = fp.readlines()
@@ -95,10 +87,7 @@ def main(vmFile):
             print("Unknown command: " + expression)
             exit(0)
 
-    asmPath = os.path.join(filePath, filePre + ".asm")
-    with open(asmPath, 'w') as asmFile:
-        asmFile.write('\n'.join(asm))
-        print("Done")
+    return '\n'.join(asm)
 
 def pushpop(command, segment, variable):
     if command == 'push' and segment in {'local', 'argument', 'this', 'that'}:
@@ -345,6 +334,7 @@ def constantPush(variable): # constant
 
 def branch(command, label):
     tmp = ""
+
     if command == "label": 
         tmp += "({}),".format(label)
     elif command == "goto":
@@ -360,46 +350,123 @@ def branch(command, label):
     return tmp.replace(",","\n")
 
 def fnctCall(command, functionName, nArgs):
-    # push returnAddress        // using the LABEL declared below eg Foo$ret.1
-    # push LCL                  // save LCL of caller
-    # push ARG                  // save ARG of caller
-    # push THIS                 // save THIS of caller
-    # push THAT                 // save THAT of caller
-    # ARG = SP - 5 - nArgs      // reposition ARG for callee
-    # LCL = SP                  // reposition LCL for callee
-    # goto functionName         // transfer controll to the called function
-    # (returnAddress)           // Declare lable for the return-address
+    global retCnt
+    tmp = ""
 
-    return "fnctCall"
+    retAdr = functionName + "$ret." + str(retCnt)
+    retCnt += 1
+
+    # push returnAddress        // using the LABEL declared below eg Foo$ret.1
+    tmp += "@{},D=A,@SP,A=M,M=D,@SP,M=M+1,".format(retAdr)
+
+    # push LCL                  // save LCL of caller
+    tmp += "@LCL,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+
+    # push ARG                  // save ARG of caller
+    tmp += "@ARG,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+
+    # push THIS                 // save THIS of caller
+    tmp += "@THIS,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+
+    # push THAT                 // save THAT of caller
+    tmp += "@THAT,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+
+    # ARG = SP - 5 - nArgs      // reposition ARG for callee
+    back = int(nArgs) + 5
+    tmp += "@SP,D=M,@{},D=D-A,@ARG,M=D,".format(back)
+
+    # LCL = SP                  // reposition LCL for callee
+    tmp += "@SP,D=A,@LCL,M=D,"
+
+    # goto functionName         // transfer controll to the called function
+    tmp += "@{},0;JMP,".format(functionName)
+
+    # (returnAddress)           // Declare lable for the return-address
+    tmp += "({}),".format(retAdr)
+
+    return tmp.replace(",","\n")
 
 def fnctFunction(command, functionName, nVars):
-    # (functionName)            // declare LABEL for function entry
-    # push 0 NVars times        // nVars are the number of local variables, initialize to 0
+    tmp = ""
 
-    return "fnctFunction"
+    # (functionName)            // declare LABEL for function entry
+    tmp += "({}),".format(functionName)
+
+    # push 0 NVars times        // nVars are the number of local variables, initialize to 0
+    for i in range(0, int(nVars)):
+        tmp += "@0,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+
+    return tmp.replace(",","\n")
 
 def returnFC():
+    tmp = ""
+
     # endFrame = LCL            // endFrame is a temporary variable
+    tmp += "@LCL,D=M,@endFrame,M=D,"
+
     # retAddr = *(endFrame -5)  // gets the return address (retAddr another temp var)
+    tmp += "@endFrame,D=M,@5,D=D-A,A=D,D=M,@retAddr,M=D,"
+
     # *ARG = pop()              // put return value into AGR[0]
+    tmp += "@SP,M=M-1,@SP,A=M,D=M,@ARG,A=M,M=D,"
+
     # SP = ARG + 1              // reposition SP
+    tmp += "@ARG,D=M+1,@SP,M=D,"
+
     # THAT = *(endFrame - 1)    // restore THAT to caller
+    tmp += "@endFrame,D=M,@1,D=D-A,A=D,D=M,@THAT,M=D,"
+
     # THIS = *(endFrame - 2)    // restore THIS to caller
+    tmp += "@endFrame,D=M,@2,D=D-A,A=D,D=M,@THIS,M=D,"
+
     # ARG  = *(endFrame - 3)    // restore ARG to caller
+    tmp += "@endFrame,D=M,@3,D=D-A,A=D,D=M,@ARG,M=D,"
+
     # LCL  = *(endFrame - 4)    // restore LCL to caller
+    tmp += "@endFrame,D=M,@4,D=D-A,A=D,D=M,@LCL,M=D,"
+
     # goto retAddr              // jump to return address in callers code 
-    
-    return "return"
+    tmp += "@retAddr,A=M,0;JMP,"
+
+    return tmp.replace(",","\n")
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: vmtranslator.py path/file.vm")
+        print("       vmtranslator.py path")
         exit(0)
-    vmFile = sys.argv[1]
-    # needs to work with full dir
-    if not path.isfile(vmFile):
+
+    vmFilePath = sys.argv[1]
+
+    output = ""
+    if path.isfile(vmFilePath):
+        fullPath = os.path.abspath(vmFilePath)
+        filePath, fileName = os.path.split(fullPath)
+
+        
+        output += main(fullPath)
+    elif path.isdir(vmFilePath):
+
+    else:
         print("Cant find file")
         exit(0)
-    fullPath = os.path.abspath(vmFile)
-    main(fullPath)
+
+   global staticName
+
+# filePath, fileName = os.path.split(vmFile)
+# filePre, fileExt = os.path.splitext(fileName)
+# staticName = filePre
+
+# if fileExt != ".vm":
+#     print("File type must be .vm")
+#     exit(0)
+
+
+
+
+
+# asmPath = os.path.join(filePath, filePre + ".asm")
+# with open(asmPath, 'w') as asmFile:
+#     asmFile.write('\n'.join(asm))
+#     print("Done")
