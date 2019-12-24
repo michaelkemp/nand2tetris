@@ -5,12 +5,8 @@ import os.path
 from os import path
 import re
 
-staticName = "static"
 jmpCnt = 0
 retCnt = 0
-
-vm = []
-asm = []
 
 disordat = {'0':'THIS', '1':'THAT'}
 
@@ -21,7 +17,9 @@ segNames = {
     'that' :        'THAT'
 }
 
-def main(vmFile):
+def main(vmFile, staticName):
+    vm = []
+    asm = []
 
     with open(vmFile) as fp:
         prog = fp.readlines()
@@ -53,7 +51,7 @@ def main(vmFile):
 
         if expression.startswith("push") or expression.startswith("pop"):
             command, segment, variable = expression.split(" ")
-            asm.append(pushpop(command, segment, variable))
+            asm.append(pushpop(command, segment, variable, staticName))
         elif expression.startswith("label") or expression.startswith("goto") or expression.startswith("if-goto"):
             command, label = expression.split(" ")
             asm.append(branch(command, label))
@@ -89,15 +87,15 @@ def main(vmFile):
 
     return '\n'.join(asm)
 
-def pushpop(command, segment, variable):
+def pushpop(command, segment, variable, staticName):
     if command == 'push' and segment in {'local', 'argument', 'this', 'that'}:
         return segPush(segment, variable)
     elif command == 'pop' and segment in {'local', 'argument', 'this', 'that'}:
         return segPop(segment, variable)
     elif command == 'push' and segment == 'static':
-        return staticPush(variable)
+        return staticPush(variable, staticName)
     elif command == 'pop' and segment == 'static':
-        return staticPop(variable)
+        return staticPop(variable, staticName)
     elif command == 'push' and segment == 'temp':
         return tempPush(variable)
     elif command == 'pop' and segment == 'temp':
@@ -245,8 +243,7 @@ def segPop(segment, variable): # local, argument, this, that
 
     return tmp.replace(",","\n")
 
-def staticPush(variable): # static -- filename.i
-    global staticName
+def staticPush(variable, staticName): # static -- filename.i
     tmp = ""
 
     # *SP = *static
@@ -257,8 +254,7 @@ def staticPush(variable): # static -- filename.i
 
     return tmp.replace(",","\n")
 
-def staticPop(variable): # static -- filename.i
-    global staticName
+def staticPop(variable, staticName): # static -- filename.i
     tmp = ""
 
     # Decrement the Stack Pointer
@@ -360,23 +356,23 @@ def fnctCall(command, functionName, nArgs):
     tmp += "@{},D=A,@SP,A=M,M=D,@SP,M=M+1,".format(retAdr)
 
     # push LCL                  // save LCL of caller
-    tmp += "@LCL,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+    tmp += "@LCL,D=M,@SP,A=M,M=D,@SP,M=M+1,"
 
     # push ARG                  // save ARG of caller
-    tmp += "@ARG,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+    tmp += "@ARG,D=M,@SP,A=M,M=D,@SP,M=M+1,"
 
     # push THIS                 // save THIS of caller
-    tmp += "@THIS,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+    tmp += "@THIS,D=M,@SP,A=M,M=D,@SP,M=M+1,"
 
     # push THAT                 // save THAT of caller
-    tmp += "@THAT,D=A,@SP,A=M,M=D,@SP,M=M+1,"
+    tmp += "@THAT,D=M,@SP,A=M,M=D,@SP,M=M+1,"
 
     # ARG = SP - 5 - nArgs      // reposition ARG for callee
     back = int(nArgs) + 5
     tmp += "@SP,D=M,@{},D=D-A,@ARG,M=D,".format(back)
 
     # LCL = SP                  // reposition LCL for callee
-    tmp += "@SP,D=A,@LCL,M=D,"
+    tmp += "@SP,D=M,@LCL,M=D,"
 
     # goto functionName         // transfer controll to the called function
     tmp += "@{},0;JMP,".format(functionName)
@@ -443,30 +439,28 @@ if __name__ == "__main__":
     if path.isfile(vmFilePath):
         fullPath = os.path.abspath(vmFilePath)
         filePath, fileName = os.path.split(fullPath)
+        filePre, fileExt = os.path.splitext(fileName)
+        output += main(fullPath, filePre)
+        asmPath = os.path.join(filePath, filePre + ".asm")
+        with open(asmPath, 'w') as asmFile:
+            asmFile.write(output)
+            print("Done")
 
-        
-        output += main(fullPath)
     elif path.isdir(vmFilePath):
+        fullPath = os.path.abspath(vmFilePath)
+        fileList = os.listdir(fullPath)
+        for fileName in fileList:
+            filePre, fileExt = os.path.splitext(fileName)
+            if fileName.endswith(".vm"):
+                filePath = os.path.join(fullPath, fileName)
+                output += main(filePath, filePre)
+
+        filePre = os.path.basename(fullPath)
+        asmPath = os.path.join(fullPath, filePre + ".asm")
+        with open(asmPath, 'w') as asmFile:
+            asmFile.write(output)
+            print("Done")
 
     else:
         print("Cant find file")
         exit(0)
-
-   global staticName
-
-# filePath, fileName = os.path.split(vmFile)
-# filePre, fileExt = os.path.splitext(fileName)
-# staticName = filePre
-
-# if fileExt != ".vm":
-#     print("File type must be .vm")
-#     exit(0)
-
-
-
-
-
-# asmPath = os.path.join(filePath, filePre + ".asm")
-# with open(asmPath, 'w') as asmFile:
-#     asmFile.write('\n'.join(asm))
-#     print("Done")
