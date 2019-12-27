@@ -37,7 +37,7 @@ def main(vmFile, staticName):
             if line.startswith("//"):
                 continue
 
-            # remove training comments and standardize remaining whitespace
+            # remove trailing comments and standardize remaining whitespace
             parts=re.split("//", line)
             line = re.sub("\s+", " ", parts[0]).strip()
 
