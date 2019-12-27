@@ -50,10 +50,10 @@ def main(jackFIle):
             i += 1
 
     # tokenize
+    tokens.append("<tokens>")
     while len(clean) > 0:
     
-        type = ""
-        value = ""
+        found = False
 
         # whitespace
         while re.search("^\s", clean):
@@ -63,45 +63,48 @@ def main(jackFIle):
         if re.search('^(")([^\n]*)(")', clean):
             string = re.match('^(")([^\n]*)(")', clean).group(0)
             clean = clean[len(string):]
-            type = "stringConst"
-            value = string
+            type = "stringConstant"
+            value = string.strip('"')
+            tokens.append("<{}> {} </{}>".format(type,value,type))
+            found = True
 
-        if type == "":
-            # identifier
-            if re.search("^([a-zA-Z]|_(\w))", clean):
-                ident = re.match("^([a-zA-Z]+|_+)(\w)*", clean).group(0)
-                clean = clean[len(ident):]
-                if ident in keywords:
-                    type = "keyword"
-                    value = ident
-                else:
-                    type = "identifier"    
-                    value = ident
+        # identifier
+        if re.search("^([a-zA-Z]|_(\w))", clean):
+            ident = re.match("^([a-zA-Z]+|_+)(\w)*", clean).group(0)
+            clean = clean[len(ident):]
+            if ident in keywords:
+                type = "keyword"
+                value = ident
+                tokens.append("<{}> {} </{}>".format(type,value,type))
+            else:
+                type = "identifier"    
+                value = ident
+                tokens.append("<{}> {} </{}>".format(type,value,type))
+            found = True
 
+        # symbols        
+        for sym in symbols:
+            if re.search("^\\"+sym, clean):
+                clean = clean[1:]
+                type = "symbol"
+                value = sym.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
+                tokens.append("<{}> {} </{}>".format(type,value,type))
+                found = True
 
-        if type == "":
-            # symbols        
-            for sym in symbols:
-                if re.search("^\\"+sym, clean):
-                    clean = clean[1:]
-                    type = "symbol"
-                    value = sym
+        # integers
+        if re.search("^\d+", clean):
+            ints = re.match("^\d+", clean).group(0)
+            clean = clean[len(ints):]
+            type = "integerConstant"
+            value = ints
+            tokens.append("<{}> {} </{}>".format(type,value,type))
+            found = True
 
-        if type == "":
-            # integers
-            if re.search("^\d+", clean):
-                ints = re.match("^\d+", clean).group(0)
-                clean = clean[len(ints):]
-                type = "intConst"
-                value = ints
-
-        if len(clean) > 0 and type == "":
+        if len(clean) > 0 and not found:
             print("Syntax Error: {}".format(clean))
             exit(0)
-
-        if type != "":
-            tokens.append("<{}> {} </{}>".format(type,value,type))
-
+            
+    tokens.append("</tokens>")
     return "\n".join(tokens)
 
 
@@ -118,14 +121,12 @@ if __name__ == "__main__":
         fullPath = os.path.abspath(jackFilePath)
         filePath, fileName = os.path.split(fullPath)
         filePre, fileExt = os.path.splitext(fileName)
-        output = main(fullPath)
-        print("\n\n===============================\n\n")
-        print(output)
+        if fileName.endswith(".jack"):
+            output = main(fullPath)
 
-        # asmPath = os.path.join(filePath, filePre + ".asm")
-        # with open(asmPath, 'w') as asmFile:
-        #     asmFile.write(output)
-        #     print("Done")
+            xmlPath = os.path.join(fullPath, "_" + filePre + "T.xml")
+            with open(xmlPath, 'w') as xmlFile:
+                xmlFile.write(output)
 
     elif path.isdir(jackFilePath):
         fullPath = os.path.abspath(jackFilePath)
@@ -135,14 +136,12 @@ if __name__ == "__main__":
             if fileName.endswith(".jack"):
                 filePath = os.path.join(fullPath, fileName)
                 output = main(filePath)
-                print("\n\n===============================\n\n")
-                print(output)
 
-        # filePre = os.path.basename(fullPath)
-        # asmPath = os.path.join(fullPath, filePre + ".asm")
-        # with open(asmPath, 'w') as asmFile:
-        #     asmFile.write(output)
-        #     print("Done")
+                xmlPath = os.path.join(fullPath, "_" + filePre + "T.xml")
+                with open(xmlPath, 'w') as xmlFile:
+                    xmlFile.write(output)
+
+        print("Done")
 
     else:
         print("Cant find file")
