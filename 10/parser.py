@@ -72,6 +72,40 @@ def tokenizer(jack):
             
     return tokens
 
+# ============================= GRAMMAR =============================
+# Structure
+#   <class>             =>  'class' <className> '{' <classVarDec>* <subroutineDec>* '}'
+#   <classVarDec>       =>  ('static' | 'field') <type> <varName> (',' <varName>)* ';'
+#   <type>              =>  'int' | 'char' | 'boolean' | <className>
+#   <subroutineDec>     =>  ('constructor' | 'function' | 'method') ('void' | <type>) <subroutineName> '(' <parameterList> ')' <subroutineBody>
+#   <parameterList>     =>  (<type> <varName> (',' <type> <varName>)* )?
+#   <subroutineBody>    =>  '{' <varDec>* <statements> '}'
+#   <varDec>            =>  'var' <type> <varName> (',' <varName>)* ';'
+#   <className>         =>  identifier
+#   <subroutineName>    =>  identifier
+#   <varName>           =>  identifier
+# Statements
+#   <statements>        =>  <statement>*
+#   <statement>         =>  <letStatement> | <ifStatement> | <whileStatement> | <doStatement> | <returnStatement>
+#   <letStatement>      =>  'let' <varName> ('[' <expression> ']')? '=' <expression> ';'
+#   <ifStatement>       =>  'if' '(' <expression> ')' '{' <statements> '}' ('else' '{' statements> '}')?
+#   <whileStatement>    =>  'while' '(' <expression> ')' '{' <statements> '}'
+#   <doStatement>       =>  'do' <subroutineCall> ';'
+#   <returnStatement>   =>  'return' <expression>? ';'
+# Expressions
+#   <expression>        =>  <term> (<op> <term>)*
+#   <term>              =>  integerConstant | stringConstant | keywordConstant | <varName> | <varName> '[' <expression> ']' | <subroutineCall> | '(' <expression> ')' | unaryOp <term>
+#   <subroutineCall>    =>  <subroutineName> '(' <expressionList> ')' | (<className>|<varName>) '.' <subroutineName> '(' <expressionList> ')' <expressionList> => (<expression> (',' <expression>)* )?
+#   <expressionList>    =>  ( <expression> (',' <expression>)* )?
+#   <op>                =>  '+' | '-' | '*' | '/' | '&' | '|' | '<' | '>' | '='
+#   <unaryOp>           =>  '-' | '~'
+#   <keywordConstant>   =>  'true' | 'false' | 'null' | 'this'
+
+
+def parser(tokens):
+    parseTree = []
+
+    return parseTree
 
 def main(jackFile):
     clean = ""
@@ -120,8 +154,8 @@ def xmled(tokenList):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: tokenizer.py path/file.jack")
-        print("       tokenizer.py path")
+        print("Usage: parser.py path/file.jack")
+        print("       parser.py path")
         exit(0)
 
     jackFilePath = sys.argv[1]
@@ -133,7 +167,7 @@ if __name__ == "__main__":
         if fileName.endswith(".jack"):
             output = main(fullPath)
 
-            xmlPath = os.path.join(fullPath, "_" + filePre + "T.xml")
+            xmlPath = os.path.join(fullPath, "_" + filePre + ".xml")
             with open(xmlPath, 'w') as xmlFile:
                 xmlFile.write(output)
 
@@ -146,7 +180,7 @@ if __name__ == "__main__":
                 filePath = os.path.join(fullPath, fileName)
                 output = main(filePath)
 
-                xmlPath = os.path.join(fullPath, "_" + filePre + "T.xml")
+                xmlPath = os.path.join(fullPath, "_" + filePre + ".xml")
                 with open(xmlPath, 'w') as xmlFile:
                     xmlFile.write(output)
 
