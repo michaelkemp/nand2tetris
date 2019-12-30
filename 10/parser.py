@@ -5,10 +5,28 @@ import os.path
 from os import path
 import re
 
+tokens = []
+tokenPtr = 0
+
+def seeNextToken():
+    return getNextToken(0)
+
+def getNextToken(inc=1):
+    global tokenPtr
+    tokenPtr += inc
+    try:
+        return [tokens[tokenPtr-inc]["type"],tokens[tokenPtr-inc]["value"]]
+    except:
+        return ["",""] 
+
 def tokenizer(jack):
+    global tokens
+    global tokenPtr
+    tokens = []
+    tokenPtr = 0
+
     keywords = ["class","constructor","function","method","field","static","var","int","char","boolean","void","true","false","null","this","let","do","if","else","while","return"]
     symbols = ["{","}","(",")","[","]",".",",",";","+","-","*","/","&","|","<",">","=","~"]
-    tokens = []
 
     # tokenize
     while len(jack) > 0:
@@ -70,7 +88,6 @@ def tokenizer(jack):
             print("Syntax Error: {}".format(jack))
             exit(0)
             
-    return tokens
 
 # ============================= GRAMMAR =============================
 # Structure
@@ -95,19 +112,257 @@ def tokenizer(jack):
 # Expressions
 #   <expression>        =>  <term> (<op> <term>)*
 #   <term>              =>  integerConstant | stringConstant | keywordConstant | <varName> | <varName> '[' <expression> ']' | <subroutineCall> | '(' <expression> ')' | unaryOp <term>
-#   <subroutineCall>    =>  <subroutineName> '(' <expressionList> ')' | (<className>|<varName>) '.' <subroutineName> '(' <expressionList> ')' <expressionList> => (<expression> (',' <expression>)* )?
+#   <subroutineCall>    =>  <subroutineName> '(' <expressionList> ')' | (<className>|<varName>) '.' <subroutineName> '(' <expressionList> ')' 
 #   <expressionList>    =>  ( <expression> (',' <expression>)* )?
 #   <op>                =>  '+' | '-' | '*' | '/' | '&' | '|' | '<' | '>' | '='
 #   <unaryOp>           =>  '-' | '~'
 #   <keywordConstant>   =>  'true' | 'false' | 'null' | 'this'
 
+def compileClass():
 
-def parser(tokens):
-    parseTree = []
+    # expect <className>
+    type,value = getNextToken()
+    if type == "identifier":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClass(): {} {}".format(type,value))
+        exit(0)
 
-    return parseTree
+    # expect {
+    type,value = getNextToken()
+    if type == "symbol" and value == "{":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClass(): {} {}".format(type,value))
+        exit(0)
+
+    # check <classVarDec> OR <subroutineDec>
+    type,value = seeNextToken()
+    while type == "keyword" and (value == "static" or value == "field"):
+        parseTree.append({"type":"open","value":"classVarDec"})
+        compileClassVarDec()
+        parseTree.append({"type":"close","value":"classVarDec"})
+        type,value = seeNextToken()
+
+    print("\n\n ---------------- {} ------------- {}\n\n".format(type,value) )
+
+    type,value = seeNextToken()    
+    while type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+        parseTree.append({"type":"open","value":"subroutineDec"})
+        compileSubroutineDec()
+        parseTree.append({"type":"close","value":"subroutineDec"})
+        type,value = seeNextToken()
+
+    # expect }
+    type,value = getNextToken()
+    if type == "symbol" and value == "}":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClass(): {} {}".format(type,value))
+        return #exit(0)
+
+
+
+def compileClassVarDec():
+
+    # expect 'static' | 'field' 
+    type,value = getNextToken()
+    if type == "keyword" and (value == "static" or value == "field"):
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClassVarDec(): {} {}".format(type,value))
+        exit(0)
+
+    # expect 'int' | 'char' | 'boolean' | <className>
+    type,value = getNextToken()
+    if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClassVarDec(): {} {}".format(type,value))
+        exit(0)
+
+    # expect <varName>
+    type,value = getNextToken()
+    if type == "identifier":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClassVarDec(): {} {}".format(type,value))
+        exit(0)
+
+    # maybe more <varName>
+    type,value = seeNextToken()
+    while (type == "symbol" and value == ","):
+
+        # expect ,
+        type,value = getNextToken()
+        if type == "symbol" and value == ",":
+            parseTree.append({"type":type,"value":value})
+        else:
+            print("Error in compileClassVarDec(): {} {}".format(type,value))
+            exit(0)
+
+        # expect <varName>
+        type,value = getNextToken()
+        if type == "identifier":
+            parseTree.append({"type":type,"value":value})
+        else:
+            print("Error in compileClassVarDec(): {} {}".format(type,value))
+            exit(0)
+
+        type,value = seeNextToken()
+
+    # expect ;
+    type,value = getNextToken()
+    if type == "symbol" and value == ";":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileClassVarDec(): {} {}".format(type,value))
+        exit(0)
+
+
+
+def compileSubroutineDec():
+
+    # expect 'constructor' | 'function' | 'method' 
+    type,value = getNextToken()
+    if type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileSubroutineDec(): {} {}".format(type,value))
+        exit(0)
+
+    # expect 'void' | 'int' | 'char' | 'boolean' | <className>
+    type,value = getNextToken()
+    if (type == "keyword" and (value == "void" or value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileSubroutineDec(): {} {}".format(type,value))
+        exit(0)
+
+    # expect <subroutineName>
+    type,value = getNextToken()
+    if type == "identifier":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileSubroutineDec(): {} {}".format(type,value))
+        exit(0)
+
+    # expect (
+    type,value = getNextToken()
+    if type == "symbol" and value == "(":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileSubroutineDec(): {} {}".format(type,value))
+        exit(0)
+
+    parseTree.append({"type":"open","value":"parameterList"})
+    compileParameterList()
+    parseTree.append({"type":"close","value":"parameterList"})
+
+    # expect )
+    type,value = getNextToken()
+    if type == "symbol" and value == ")":
+        parseTree.append({"type":type,"value":value})
+    else:
+        print("Error in compileSubroutineDec(): {} {}".format(type,value))
+        exit(0)
+
+    parseTree.append({"type":"open","value":"subroutineBody"})
+    compileSubroutineBody()
+    parseTree.append({"type":"close","value":"subroutineBody"})
+
+
+def compileParameterList():
+
+    type,value = seeNextToken()
+    if type == "symbol" and value == ")":
+        return
+
+    while True:
+        # expect 'int' | 'char' | 'boolean' | <className>
+        type,value = getNextToken()
+        if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+            parseTree.append({"type":type,"value":value})
+        else:
+            print("Error in compileParameterList(): {} {}".format(type,value))
+            exit(0)
+
+        # expect <varName>
+        type,value = getNextToken()
+        if type == "identifier":
+            parseTree.append({"type":type,"value":value})
+        else:
+            print("Error in compileParameterList(): {} {}".format(type,value))
+            exit(0)
+
+        # maybe more <type> <varName>
+        type,value = seeNextToken()
+        if type == "symbol" and value == ",":
+            type,value = getNextToken()
+            parseTree.append({"type":type,"value":value})
+        elif type == "symbol" and value == ")":
+            return
+        else:
+            print("Error in compileParameterList(): {} {}".format(type,value))
+            exit(0)
+
+
+def compileSubroutineBody():
+    print(getNextToken())
+    return
+def compileVarDec():
+    print(getNextToken())
+    return
+def compileStatements():
+    print(getNextToken())
+    return
+def compileLet():
+    print(getNextToken())
+    return
+def compileIf():
+    print(getNextToken())
+    return
+def compileWhile():
+    print(getNextToken())
+    return
+def compileDo():
+    print(getNextToken())
+    return
+def compileReturn():
+    print(getNextToken())
+    return
+def compileExpression():
+    print(getNextToken())
+    return
+def compileTerm(): # look ahead for '[', '(', or '.' -- array, variable, subroutine call
+    print(getNextToken())
+    return
+def compileExpressionList():
+    print(getNextToken())
+    return
+
+## simple rules with no corresponding functions - type, className, subroutineName, varName, statement, subroutineCall    
+
+parseTree = []
+
+def parser():
+    global parseTree
+
+    # expect class
+    type,value = getNextToken()
+    if type == "keyword" and value == "class":
+        parseTree.append({"type":"open","value":"class"})
+        parseTree.append({"type":type,"value":value})
+        compileClass()
+        parseTree.append({"type":"close","value":"class"})
+    else:
+        print("Error in parser(): {} {}".format(type,value))
+        exit(0)
+
 
 def main(jackFile):
+    global parseTree
+    parseTree = []
     clean = ""
 
     # clean up comments and white space
@@ -139,17 +394,29 @@ def main(jackFile):
                 clean += jack[i]
             i += 1
 
-    tokens = tokenizer(clean)    
-    return xmled(tokens)
+    tokenizer(clean)
+    parser()
+    print(parseTree)
+    return xmled(parseTree)
 
-def xmled(tokenList):
-    str = "<tokens>\n"
-    for i in range(len(tokenList)):
-        type = tokenList[i]["type"]
-        value = tokenList[i]["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
-        str += "<{}> {} </{}>\n".format(type,value,type)
-
-    str += "</tokens>\n"
+def xmled(parseTreeList):
+    tabCount = 0
+    tabSpaces = 2
+    str = ""
+    for i in range(len(parseTreeList)):
+        type = parseTreeList[i]["type"]
+        value = parseTreeList[i]["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
+        if type == "open":
+            str += " "*tabCount
+            str += "<{}>\n".format(value)
+            tabCount += tabSpaces
+        elif type == "close":
+            tabCount -= tabSpaces
+            str += " "*tabCount
+            str += "</{}>\n".format(value)
+        else:
+            str += " "*tabCount
+            str += "<{}> {} </{}>\n".format(type,value,type)
     return str
 
 if __name__ == "__main__":
@@ -177,6 +444,7 @@ if __name__ == "__main__":
         for fileName in fileList:
             filePre, fileExt = os.path.splitext(fileName)
             if fileName.endswith(".jack"):
+                print("\n--{}".format(fileName))
                 filePath = os.path.join(fullPath, fileName)
                 output = main(filePath)
 
