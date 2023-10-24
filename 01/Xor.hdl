@@ -13,12 +13,13 @@ CHIP Xor {
     OUT out;
 
     PARTS:
-    // Put your code here:
-    // https://en.wikipedia.org/wiki/NAND_logic
-
-    Nand (a=a, b=b, out=NandAB);
-    Nand (a=a, b=NandAB, out=NandAAB);
-    Nand (a=NandAB, b=b, out=NandABB);
-    Nand (a=NandAAB, b=NandABB, out=out);
+        Nand (a=a, b=b, out=NandAB);
+        Nand (a=a, b=NandAB, out=NandAAB);
+        Nand (a=NandAB, b=b, out=NandABB);
+        Nand (a=NandAAB, b=NandABB, out=out);
 
 }
+
+// https://en.wikipedia.org/wiki/NAND_logic
+
+// OUT = A XOR B = [A NAND (A NAND B)] NAND [B NAND (A NAND B )]

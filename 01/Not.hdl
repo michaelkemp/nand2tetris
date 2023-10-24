@@ -13,9 +13,10 @@ CHIP Not {
     OUT out;
 
     PARTS:
-    // Put your code here:
-    // https://en.wikipedia.org/wiki/NAND_logic
-
-    Nand (a=in, b=in, out=out);
+        Nand (a=in, b=in, out=out);
 
 }
+
+// https://en.wikipedia.org/wiki/NAND_logic
+
+// OUT = NOT(A) = A NAND A

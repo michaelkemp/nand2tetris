@@ -14,13 +14,15 @@ CHIP DMux {
     OUT a, b;
 
     PARTS:
-    // Put your code here:
-    // https://en.wikipedia.org/wiki/NAND_logic
-
-    Nand (a=sel, b=sel, out=NotS);
-    Nand (a=sel, b=in, out=NandSI);
-    Nand (a=in, b=NotS, out=NandINotS);
-    Nand (a=NandINotS, b=NandINotS, out=a);
-    Nand (a=NandSI, b=NandSI, out=b);
+        Nand (a=sel, b=sel, out=NotS);
+        Nand (a=sel, b=in, out=NandSI);
+        Nand (a=in, b=NotS, out=NandINotS);
+        Nand (a=NandINotS, b=NandINotS, out=a);
+        Nand (a=NandSI, b=NandSI, out=b);
 
 }
+
+// https://en.wikipedia.org/wiki/NAND_logic
+
+// AOUT = (I AND NOT(S)) = ((S NAND S) NAND I) NAND ((S NAND S) NAND I)
+// BOUT = (I AND S) = (S NAND I) NAND (S NAND I)

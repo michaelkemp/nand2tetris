@@ -1,0 +1,42 @@
+
+        x  y  z  f
+        -----------
+1       0  0  0  1
+2       0  0  1  0
+3       0  1  0  1
+4       0  1  1  0
+5       1  0  0  1
+6       1  0  1  0
+7       1  1  0  1
+8       1  1  1  0
+
+Calculate Lines that compute to 1 -- each of these returns a 0 for all other Lines
+
+1) NOT(x) AND NOT(y) AND NOT(z) = 1
+3) NOT(x) AND     y  AND NOT(z) = 1
+5)     x  AND NOT(y) AND NOT(z) = 1
+7)     x  AND     y  AND NOT(z) = 1
+
+Or together the lines commands above
+
+(NOT(x) AND NOT(y) AND NOT(z)) OR 
+(NOT(x) AND     y  AND NOT(z)) OR
+(    x  AND NOT(y) AND NOT(z)) OR
+(    x  AND     y  AND NOT(z)) 
+
+All logic tables can be calculated with AND NOT and OR
+
+BUT...
+
+NOT(x OR y) = NOT(x) AND NOT(y)
+NOT(x AND y) = NOT(x) OR NOT(y)
+
+(x OR y) = NOT( NOT(x) AND NOT(y) )
+(x AND y) = NOT( NOT(x) OR NOT(y) )
+
+So we can calulate everything with just AND and NOT
+
+BUT...
+
+NOT(x) = (x NAND x)
+x AND y = NOT(x NAND y) -> ( (x NAND y) NAND (x NAND y) )

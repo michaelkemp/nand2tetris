@@ -14,11 +14,12 @@ CHIP Or {
     OUT out;
 
     PARTS:
-    // Put your code here:
-    // https://en.wikipedia.org/wiki/NAND_logic
-
-    Nand (a=a, b=a, out=NotA);
-    Nand (a=b, b=b, out=NotB);
-    Nand (a=NotA, b=NotB, out=out);
+        Nand (a=a, b=a, out=NotA);
+        Nand (a=b, b=b, out=NotB);
+        Nand (a=NotA, b=NotB, out=out);
 
 }
+
+// https://en.wikipedia.org/wiki/NAND_logic
+
+// OUT = A OR B	= (A NAND A) NAND (B NAND B)

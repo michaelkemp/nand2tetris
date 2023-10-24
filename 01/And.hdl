@@ -14,10 +14,11 @@ CHIP And {
     OUT out;
 
     PARTS:
-    // Put your code here:
-    // https://en.wikipedia.org/wiki/NAND_logic
-
-    Nand (a=a, b=b, out=NandAB);
-    Nand (a=NandAB, b=NandAB, out=out);
+        Nand (a=a, b=b, out=NandAB);
+        Nand (a=NandAB, b=NandAB, out=out);
 
 }
+
+// https://en.wikipedia.org/wiki/NAND_logic
+
+// OUT = A AND B = (A NAND B) NAND (A NAND B)
