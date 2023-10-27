@@ -1,0 +1,96 @@
+Symbols:
+    R0      -> 0
+    ...
+    R15     -> 15
+    SCREEN  -> 16384
+    KBD     -> 24576
+
+Variables: (allocated from RAM[16] and onward)
+    // Swap RAM[0] and RAM[1]
+    @R0         // Place R0 (0) into A (select RAM[0])
+    D=M         // Put value of RAM[0] into D
+    @tmp        // "create" tmp valiable
+    M=D         // Store D in tmp
+
+    @R1         // Select RAM[1]
+    D=M         // Put value of RAM[1] into D
+    @R0         // Select RAM[0]
+    M=D         // Put D into RAM[0] 
+
+    @tmp        // Select tmp
+    D=M         // Put value of tmp into D
+    @R1         // Select RAM[1]
+    M=D         // Put D into RAM[1] 
+
+Labels: 
+    (END)       // symbolic reference to "line number"
+        @END    // put value of lable END into A 
+        0;JMP   // jump to value put in A
+
+Registers:
+
+    A Register -> Address Register
+    D Register -> Data Register
+    M Register -> Memory RAM[A] (the selected RAM register)
+
+Instruction Set:
+
+    A Instruction
+        @xxx (xxx is non negative constant OR a symbol refering to such)
+            @19
+                A Register <- 19
+                RAM[19] selected
+
+            @25     // A=25 (RAM[25] Selected)
+            M=1     // RAM[25] = 1
+
+
+    C Instruction
+        dest = computation ; jump (dest and jump are optional)
+        dest            nul, A, M, D, AD, AM, MD, AMD
+        computation     0, 1, -1, A, M, D, !A, !M, !D, -A, -M, -D, 
+                        A+1, M+1, D+1, A-1, M-1, D-1, 
+                        D+A, D+M, D-A, D-M, A-D, M-D, 
+                        D&A, D&M, D|A, D|M
+        jump            nul, JEQ, JGT, JLT, JGE, JLE, JNE, JMP 
+                        (computation compared to 0; jump to destination is A Register) 
+
+        {A|D|M} = {0|1|-1}
+            A=0
+            D=-1
+            M=1
+
+        {A|D|M} = {A|D|M|-A|-D|-M}
+            ## Set D = 22
+            @22
+            D=A
+
+            ## Set RAM[13] = 7
+            @7
+            D=A
+            @13
+            M=D
+
+        {A|D|M} = {A|D|M} {+|-} {A|D|M|1}
+
+            ## Set D = 30; Add 50 to D
+            @30
+            D=A
+            @50
+            D=D+A
+
+            ## Set RAM[3] = 20; Set RAM[4] = 25; Set RAM[3] = RAM[4] + 1
+            @20
+            D=A
+            @3
+            M=D     // RAM[3] = 20
+            @25
+            D=A
+            @4
+            M=D     // RAM[4] = 25
+            @4
+            D=M+1
+            @3
+            M=D     // RAM[3] = RAM[4] + 1
+
+
