@@ -27,21 +27,19 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+        Not (in=address[14], out=isRam);
+        And (a=address[14], b=address[13], out=isKbd);
+        Or (a=isRam, b=isKbd, out=notScr);
+        Not (in=notScr, out=isScr);
 
-    Not (in=address[14], out=isRam);
-    And (a=address[14], b=address[13], out=isKbd);
-    Or (a=isRam, b=isKbd, out=notScr);
-    Not (in=notScr, out=isScr);
+        And (a=load, b=isRam, out=loadRam);
+        And (a=load, b=isScr, out=loadScr);
 
-    And (a=load, b=isRam, out=loadRam);
-    And (a=load, b=isScr, out=loadScr);
+        RAM16K (in=in, load=loadRam, address=address[0..13], out=outRam);
+        Screen (in=in, load=loadScr, address=address[0..12], out=outScr);
+        Keyboard (out=outKbd);
 
-    RAM16K (in=in, load=loadRam, address=address[0..13], out=outRam);
-    Screen (in=in, load=loadScr, address=address[0..12], out=outScr);
-    Keyboard (out=outKbd);
-
-    Mux16 (a=outRam, b=outScr, sel=isScr, out=RorS);
-    Mux16 (a=RorS, b=outKbd, sel=isKbd, out=out);
+        Mux16 (a=outRam, b=outScr, sel=isScr, out=RorS);
+        Mux16 (a=RorS, b=outKbd, sel=isKbd, out=out);
 
 }
