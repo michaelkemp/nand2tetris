@@ -114,7 +114,6 @@ def main(asmFile):
 
     with open(asmFile) as fp:
         prog = fp.readlines()
-        linecount = 0
         for line in prog:
             
             # remove leading and training space
@@ -134,11 +133,8 @@ def main(asmFile):
 
             # Add labels to variable dictionary
             if line.startswith("("):
-                label = line[line.find("(")+1 : line.find(")")]
-                variables[label] = linecount
+                variables[line[1:-1]] = len(asm)
                 continue
-
-            linecount += 1
 
             asm.append(line)
 
