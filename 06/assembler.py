@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 
-import sys
-import os.path
-from os import path
-import re
-
-import tokenizer
+import sys, os, re
+import asm2hack
 
 def main(asmPath, hackPath):
     asm = []
-    with open(asmFile) as fp:
+    with open(asmPath) as fp:
         prog = fp.readlines()
         linecount = 0
         for line in prog:
@@ -30,21 +26,15 @@ def main(asmPath, hackPath):
 
            # Add label
             if line.startswith("("):
-                tokenizer.addLabel(line[1:-1], len(asm))
+                asm2hack.addLabel(line[1:-1], len(asm))
                 continue
             
             asm.append(line)
     
-    hack = tokenizer.hack(asm)
+    hack = asm2hack.hack(asm)
     with open(hackPath, 'w') as hackFile:
         hackFile.write('\n'.join(hack))
     print("Done")
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -56,7 +46,7 @@ if __name__ == "__main__":
     
     ## Is supplied path a valid file
     asmFile = sys.argv[1]
-    if not path.isfile(asmFile):
+    if not os.path.isfile(asmFile):
         print("Cant find file")
         exit(0)
 

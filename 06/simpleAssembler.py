@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 
-import sys
-import os.path
-from os import path
-import re
-
-import simpleTokenizer
-
+import sys, os, re
+import simpleAsm2hack
 
 def main(asmPath, hackPath):
     asm = []
-    with open(asmFile) as fp:
+    with open(asmPath) as fp:
         prog = fp.readlines()
         linecount = 0
         for line in prog:
@@ -31,10 +26,14 @@ def main(asmPath, hackPath):
            
             asm.append(line)
     
-    hack = simpleTokenizer.hack(asm)
+    hack = simpleAsm2hack.hack(asm)
     with open(hackPath, 'w') as hackFile:
         hackFile.write('\n'.join(hack))
     print("Done")
+
+
+
+
 
 
 
@@ -47,7 +46,7 @@ if __name__ == "__main__":
     
     ## Is supplied path a valid file
     asmFile = sys.argv[1]
-    if not path.isfile(asmFile):
+    if not os.path.isfile(asmFile):
         print("Cant find file")
         exit(0)
 
