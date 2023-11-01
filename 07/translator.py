@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import sys, os, re
-import simpleAsm2hack
+import vm2asm
 
-def main(asmPath, hackPath):
-    asm = []
-    with open(asmPath) as fp:
+def main(vmPath, asmPath, filePre):
+    vm = []
+    with open(vmPath) as fp:
         prog = fp.readlines()
         linecount = 0
         for line in prog:
@@ -23,12 +23,14 @@ def main(asmPath, hackPath):
 
             ## Remove inline comments
             line = line.split("//", 1)[0].strip()
-           
-            asm.append(line)
+
+            vm.append(line)
     
-    hack = simpleAsm2hack.hack(asm)
-    with open(hackPath, 'w') as hackFile:
-        hackFile.write('\n'.join(hack))
+    translate = vm2asm.Translator(vm, filePre)
+    asm = translate.parse()
+    
+    with open(asmPath, 'w') as asmFile:
+        asmFile.write('\n'.join(asm))
     print("Done")
 
 
@@ -37,26 +39,26 @@ if __name__ == "__main__":
     
     ## Check if file path was supplied
     if len(sys.argv) != 2:
-        print("Usage: simpleAssembler.py path/file.asm")
+        print("Usage: translator.py path/file.vm")
         exit(0)
     
     ## Is supplied path a valid file
-    asmFile = sys.argv[1]
-    if not os.path.isfile(asmFile):
+    vmFile = sys.argv[1]
+    if not os.path.isfile(vmFile):
         print("Cant find file")
         exit(0)
 
     ## Get absolute path
-    asmPath = os.path.abspath(asmFile)
+    vmPath = os.path.abspath(vmFile)
 
     ## Check if supplied file if of type .asm 
-    filePath, fileName = os.path.split(asmPath)
+    filePath, fileName = os.path.split(vmPath)
     filePre, fileExt = os.path.splitext(fileName)
-    if fileExt != ".asm":
-        print("File type must be of type .asm")
+    if fileExt != ".vm":
+        print("File type must be of type .vm")
         exit(0)
  
-    ## Create file path of assembled code
-    hackPath = os.path.join(filePath, filePre + ".hack")
+    ## Create file path of assembly code
+    asmPath = os.path.join(filePath, filePre + ".asm2")
 
-    main(asmPath, hackPath)
+    main(vmPath, asmPath, filePre)

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     
     ## Check if file path was supplied
     if len(sys.argv) != 2:
-        print("Usage: simpleAssembler.py path/file.asm")
+        print("Usage: assembler.py path/file.asm")
         exit(0)
     
     ## Is supplied path a valid file
