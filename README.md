@@ -71,15 +71,9 @@
 - https://www.youtube.com/watch?v=7gDDvRpFOlI
 - https://www.youtube.com/watch?v=iGmTcY5gQxc
 
+# Part 2
 
-
-
-
-
-
-
-
-PART2
+## Unit 1:
 - https://www.youtube.com/watch?v=KBTg0ju4rxM
 - https://www.youtube.com/watch?v=E28KczysecE
 - https://www.youtube.com/watch?v=zldqSN7YfY8
@@ -88,8 +82,11 @@ PART2
 - https://www.youtube.com/watch?v=GE8X15K7ReI
 - https://www.youtube.com/watch?v=I2-AQweprWQ
 - https://www.youtube.com/watch?v=LeJsvUUOuOQ
+- https://www.youtube.com/watch?v=Z-D0swtp64g
 - https://www.youtube.com/watch?v=-ah0p72Kbz8
 - https://www.youtube.com/watch?v=j0qDp2iq3LA
+
+## Unit 2:
 - https://www.youtube.com/watch?v=UhC20aAl8IM
 - https://www.youtube.com/watch?v=0fWjbGza6TI
 - https://www.youtube.com/watch?v=mhTLP4iQqrs
@@ -100,7 +97,8 @@ PART2
 - https://www.youtube.com/watch?v=P6YcKvpi8CE
 - https://www.youtube.com/watch?v=J9AwAgPME5Q
 - https://www.youtube.com/watch?v=HoLgUZyLPEg
-- https://www.youtube.com/watch?v=Z-D0swtp64g
+
+## Unit 3:
 - https://www.youtube.com/watch?v=YKkG97oqpxw
 - https://www.youtube.com/watch?v=0LYovergElE
 - https://www.youtube.com/watch?v=NrWxzQxiFHI
@@ -112,6 +110,8 @@ PART2
 - https://www.youtube.com/watch?v=O35jFp6Oe9I
 - https://www.youtube.com/watch?v=7Z1QoahPrBg
 - https://www.youtube.com/watch?v=YuNWwK7TRuQ
+
+## Unit 4:
 - https://www.youtube.com/watch?v=S-6pdViiezU
 - https://www.youtube.com/watch?v=8MVWOBF-7Mg
 - https://www.youtube.com/watch?v=d74ZTSHfK5Y
@@ -122,6 +122,8 @@ PART2
 - https://www.youtube.com/watch?v=bDOwnb-sb8w
 - https://www.youtube.com/watch?v=KgzpIIAvPpk
 - https://www.youtube.com/watch?v=QM-4Z16Yus4
+
+## Unit 5:
 - https://www.youtube.com/watch?v=X0NWLeitY80
 - https://www.youtube.com/watch?v=eU2ZrJQI5vE
 - https://www.youtube.com/watch?v=s7Vz8YtLZdY
@@ -134,6 +136,8 @@ PART2
 - https://www.youtube.com/watch?v=mbSmhACFqr0
 - https://www.youtube.com/watch?v=SAVh9tDBAPc
 - https://www.youtube.com/watch?v=NP1LyrNKzMg
+
+## Unit 6:
 - https://www.youtube.com/watch?v=IC7f-lEhfes
 - https://www.youtube.com/watch?v=7lWjTKWK8D8
 - https://www.youtube.com/watch?v=7fkEpfthJxg
@@ -148,6 +152,8 @@ PART2
 - https://www.youtube.com/watch?v=jCckAI0-shI
 - https://www.youtube.com/watch?v=SqPk51suWEk
 - https://www.youtube.com/watch?v=t1tyx27dDHk
+
+## Unit 7:
 - https://www.youtube.com/watch?v=Sbw2UuIaohI
 - https://www.youtube.com/watch?v=jFW4EstOB8g
 - https://www.youtube.com/watch?v=1ZmHE0Alfvs
