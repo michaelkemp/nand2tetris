@@ -74,6 +74,7 @@
 # Part 2
 
 ## Unit 1:
+- https://drive.google.com/file/d/1BPmhMLu_4QTcte0I5bK4QBHI8SACnQSt/view
 - https://www.youtube.com/watch?v=KBTg0ju4rxM
 - https://www.youtube.com/watch?v=E28KczysecE
 - https://www.youtube.com/watch?v=zldqSN7YfY8
@@ -87,6 +88,7 @@
 - https://www.youtube.com/watch?v=j0qDp2iq3LA
 
 ## Unit 2:
+- https://drive.google.com/file/d/1BexrNmdqYhKPkqD_Y81qNAUeyfzl-ZtO/view
 - https://www.youtube.com/watch?v=UhC20aAl8IM
 - https://www.youtube.com/watch?v=0fWjbGza6TI
 - https://www.youtube.com/watch?v=mhTLP4iQqrs
@@ -99,6 +101,7 @@
 - https://www.youtube.com/watch?v=HoLgUZyLPEg
 
 ## Unit 3:
+- https://drive.google.com/file/d/1CAGF8d3pDIOgqX8NZGzU34PPEzvfTYrk/view
 - https://www.youtube.com/watch?v=YKkG97oqpxw
 - https://www.youtube.com/watch?v=0LYovergElE
 - https://www.youtube.com/watch?v=NrWxzQxiFHI
@@ -112,6 +115,7 @@
 - https://www.youtube.com/watch?v=YuNWwK7TRuQ
 
 ## Unit 4:
+- https://drive.google.com/file/d/1CM_w6cxQpYnYHcP-OhNkNU6oD5rMnjzv/view
 - https://www.youtube.com/watch?v=S-6pdViiezU
 - https://www.youtube.com/watch?v=8MVWOBF-7Mg
 - https://www.youtube.com/watch?v=d74ZTSHfK5Y
@@ -124,6 +128,7 @@
 - https://www.youtube.com/watch?v=QM-4Z16Yus4
 
 ## Unit 5:
+- https://drive.google.com/file/d/1CYOcXKxfAwRHaOERvoyuNKSwdlxMo_e3/view
 - https://www.youtube.com/watch?v=X0NWLeitY80
 - https://www.youtube.com/watch?v=eU2ZrJQI5vE
 - https://www.youtube.com/watch?v=s7Vz8YtLZdY
@@ -138,6 +143,7 @@
 - https://www.youtube.com/watch?v=NP1LyrNKzMg
 
 ## Unit 6:
+- https://drive.google.com/file/d/137PiYjt4CAZ3ROWiD0DJ8XMUbMM0_VHR/view
 - https://www.youtube.com/watch?v=IC7f-lEhfes
 - https://www.youtube.com/watch?v=7lWjTKWK8D8
 - https://www.youtube.com/watch?v=7fkEpfthJxg
