@@ -1,3 +1,4 @@
+
 // function SimpleFunction.test 2
 (SimpleFunction.test)
 @0

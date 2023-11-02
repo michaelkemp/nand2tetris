@@ -1,3 +1,4 @@
+
 // function Sys.init 0
 (Sys.init)
 
@@ -66,6 +67,7 @@ M=D
 // goto WHILE
 @WHILE
 0;JMP
+
 // function Main.fibonacci 0
 (Main.fibonacci)
 

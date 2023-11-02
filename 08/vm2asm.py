@@ -1,10 +1,7 @@
 import re
 
 class Translator:
-    def __init__(self, vm, staticName = "static"):
-
-        self.vm = vm
-        self.staticName = staticName
+    def __init__(self):
 
         self.jmpCnt = 0
         self.retCnt = 0
@@ -12,53 +9,58 @@ class Translator:
         self.disordat = {'0':'THIS', '1':'THAT'}
         self.segNames = {'local':'LCL', 'argument':'ARG', 'this':'THIS', 'that':'THAT'}
 
-    def parse(self):
-        asm = []
+    def parse(self, vm, staticName = "static"):
+
+        self.asm = ""
+
+        self.vm = vm
+        self.staticName = staticName
+
         for expression in self.vm:
 
             # Comment asm output with current expression
-            asm.append("// " + expression)
+            self.asm += "\n// {}\n".format(expression)
 
             command = expression.split(" ", 1)[0].strip()
             match command:
                 case "push" | "pop":
-                    asm.append(self.pushpop(expression))
+                    self.asm += self.pushpop(expression)
 
                 case "label" | "goto" | "if-goto":
-                    asm.append(self.branch(expression))
+                    self.asm += self.branch(expression)
                 
                 case "function":
-                    asm.append(self.fnctFunction(expression))
+                    self.asm += self.fnctFunction(expression)
                 case "call":
-                    asm.append(self.fnctCall(expression))
+                    self.asm += self.fnctCall(expression)
                 case "return":
-                    asm.append(self.fnctReturn())
+                    self.asm += self.fnctReturn()
                 
                 case "add":
-                    asm.append(self.mathAdd())
+                    self.asm += self.mathAdd()
                 case "sub":
-                    asm.append(self.mathSub())
+                    self.asm += self.mathSub()
                 case "neg":
-                    asm.append(self.mathNeg())
+                    self.asm += self.mathNeg()
 
                 case "eq":
-                    asm.append(self.mathEQ())
+                    self.asm += self.mathEQ()
                 case "gt":
-                    asm.append(self.mathGT())
+                    self.asm += self.mathGT()
                 case "lt":
-                    asm.append(self.mathLT())
+                    self.asm += self.mathLT()
 
                 case "and":
-                    asm.append(self.logicAnd())
+                    self.asm += self.logicAnd()
                 case "or":
-                    asm.append(self.logicOr())
+                    self.asm += self.logicOr()
                 case "not":
-                    asm.append(self.logicNot())
+                    self.asm += self.logicNot()
 
                 case _:
                     raise SyntaxError("Unknown expression: {}".format(expression))
             
-        return asm
+        return self.asm
     
 
     def pushpop(self, expression):
