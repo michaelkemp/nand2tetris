@@ -91,18 +91,22 @@ class Translator:
                         raise SyntaxError("Unknown expression: {}".format(expression))
 
 
+    ## TODO
     def branch(self, expression):
         command, label = expression.split(" ")
         return "{} {}".format(command, label)
 
+    ## TODO
     def fnctFunction(self, expression):
         command, functionName, nVars = expression.split(" ")
         return "{} {} {}".format(command, functionName, nVars)
 
+    ## TODO
     def fnctCall(self, expression):
         command, functionName, nArgs = expression.split(" ")
         return "{} {} {}".format(command, functionName, nArgs)
 
+    ## TODO
     def fnctReturn(self):
         return "fnctReturn"
 

@@ -18,7 +18,7 @@ def main(vmPath, asmPath, filePre):
                 continue
             
             ## Skip comment lines -- lines that begin with //
-            if re.match("^\/\/", line) is not None:
+            if re.match("^//", line) is not None:
                 continue
 
             ## Remove inline comments
@@ -59,6 +59,6 @@ if __name__ == "__main__":
         exit(0)
  
     ## Create file path of assembly code
-    asmPath = os.path.join(filePath, filePre + ".asm2")
+    asmPath = os.path.join(filePath, filePre + ".asm")
 
     main(vmPath, asmPath, filePre)

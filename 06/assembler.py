@@ -18,7 +18,7 @@ def main(asmPath, hackPath):
                 continue
             
             ## Skip comment lines -- lines that begin with //
-            if re.match("^\/\/", line) is not None:
+            if re.match("^//", line) is not None:
                 continue
 
             ## Remove inline comments
