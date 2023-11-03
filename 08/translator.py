@@ -3,10 +3,19 @@
 import sys, os, re
 import vm2asm
 
-def main(pathData, asmPath): #vmPath, asmPath, filePre):
+def main(pathData, asmPath):
 
+    ## Instantiate Translator
     translate = vm2asm.Translator()
-    asm = ""
+ 
+    if len(pathData) > 1:
+        ## Bootstrap (Set Stack Pointer to 256, call Sys.init)
+        asm = "//BOOTSTRAP,@256,D=A,@SP,M=D,".replace(",","\n")
+        bs = ["call Sys.init 0"]
+        asm += translate.parse(bs, "BOOTSTRAP")
+    else:
+        ## Self contained file (doesn't seem to need bootstrap)
+        asm = ""
 
     for pd in pathData:
         vm = []
@@ -60,7 +69,6 @@ if __name__ == "__main__":
         if fileExt != ".vm":
             raise FileNotFoundError("File must be of type .vm")
         pathData.append({"vmPath": vmPath, "filePre": filePre})
-        #print(pathData, asmPath)
         main(pathData, asmPath)
 
     elif os.path.isdir(vmFilePath):
@@ -68,13 +76,11 @@ if __name__ == "__main__":
         asmPre = os.path.basename(fullPath)
         asmPath = os.path.join(fullPath, asmPre + ".asm")
         fileList = os.listdir(fullPath)
-        fileList.sort(reverse=True) ## Sys.vm needs to be first in the list??
         for fileName in fileList:
             filePre, fileExt = os.path.splitext(fileName)
             if fileName.endswith(".vm"):
                 vmPath = os.path.join(fullPath, fileName)
                 pathData.append({"vmPath": vmPath, "filePre": filePre})
-        #print(pathData, asmPath)
         main(pathData, asmPath)
     else:
         raise FileNotFoundError("File Not Found")
