@@ -8,44 +8,40 @@ def main(pathData, asmPath):
     ## Instantiate Translator
     translate = vm2asm.Translator()
  
-    if len(pathData) > 1:
-        ## Bootstrap (Set Stack Pointer to 256, call Sys.init)
-        asm = "//BOOTSTRAP,@256,D=A,@SP,M=D,".replace(",","\n")
-        bs = ["call Sys.init 0"]
-        asm += translate.parse(bs, "BOOTSTRAP")
-    else:
-        ## Self contained file (doesn't seem to need bootstrap)
-        asm = ""
+    ## Bootstrap (Set Stack Pointer to 256, call Sys.init)
+    BOOTSTRAP = "//BOOTSTRAP,@256,D=A,@SP,M=D,".replace(",","\n")
+    BOOTSTRAP += translate.parse(["call Sys.init 0"], "BOOTSTRAP")
+    ADDBSTRAP = False
 
+    ASM = ""
     for pd in pathData:
         vm = []
         vmPath = pd["vmPath"]
         filePre = pd["filePre"]
         with open(vmPath) as fp:
             prog = fp.readlines()
-            linecount = 0
             for line in prog:
-
                 ## Strip leading and trailing spaces
                 line = line.strip()
-
                 ## Skip blank lines
                 if line == "":
                     continue
-                
                 ## Skip comment lines -- lines that begin with //
                 if re.match("^//", line) is not None:
                     continue
-
                 ## Remove inline comments
                 line = line.split("//", 1)[0].strip()
-
                 vm.append(line)
+                if line == "function Sys.init 0":
+                    ADDBSTRAP = True
 
-            asm += translate.parse(vm, filePre)
+            ASM += translate.parse(vm, filePre)
     
+    if ADDBSTRAP:
+        ASM = BOOTSTRAP + ASM
+
     with open(asmPath, 'w') as asmFile:
-        asmFile.write(asm)
+        asmFile.write(ASM)
     print("Done")
 
 
@@ -81,6 +77,8 @@ if __name__ == "__main__":
             if fileName.endswith(".vm"):
                 vmPath = os.path.join(fullPath, fileName)
                 pathData.append({"vmPath": vmPath, "filePre": filePre})
+        if len(pathData) == 0:
+            raise FileNotFoundError("File must be of type .vm")
         main(pathData, asmPath)
     else:
         raise FileNotFoundError("File Not Found")

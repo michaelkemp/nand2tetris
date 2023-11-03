@@ -1,3 +1,58 @@
+//BOOTSTRAP
+@256
+D=A
+@SP
+M=D
+
+// call Sys.init 0
+@Sys.init$ret.0
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+D=M
+@5
+D=D-A
+@ARG
+M=D
+@SP
+D=M
+@LCL
+M=D
+@Sys.init
+0;JMP
+(Sys.init$ret.0)
 
 // function Sys.init 0
 (Sys.init)
@@ -39,7 +94,7 @@ M=D
 M=D
 
 // call Sys.main 0
-@Sys.main$ret.0
+@Sys.main$ret.1
 D=A
 @SP
 A=M
@@ -86,7 +141,7 @@ D=M
 M=D
 @Sys.main
 0;JMP
-(Sys.main$ret.0)
+(Sys.main$ret.1)
 
 // pop temp 1
 @R5
@@ -270,7 +325,7 @@ M=D
 M=M+1
 
 // call Sys.add12 1
-@Sys.add12$ret.1
+@Sys.add12$ret.2
 D=A
 @SP
 A=M
@@ -317,7 +372,7 @@ D=M
 M=D
 @Sys.add12
 0;JMP
-(Sys.add12$ret.1)
+(Sys.add12$ret.2)
 
 // pop temp 0
 @R5
