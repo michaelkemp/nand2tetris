@@ -3,19 +3,18 @@
 import sys, os, json
 import jackTokenizer, jackCompilationEngine
 
-def main(pathData, xmlPath):
+def main(pathData):
 
-  for pd in pathData:
-    jackPath = pd["jackPath"]
-    filePre = pd["filePre"]
-    with open(jackPath) as fp:
-      jack = fp.read()
+  for thisFile in pathData:
 
-    jackTkizr = jackTokenizer.Tokenizer(jack)
+    jackTkizr = jackTokenizer.Tokenizer(thisFile)
     tokens = jackTkizr.getTokens()
-    jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
-    compiled = jackCmpEng.parseTokens()
-    ##print(json.dumps(tmp,indent=2))
+    print(tokens)
+    
+    # tokens = jackTkizr.getTokens()
+    # jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
+    # compiled = jackCmpEng.parseTokens()
+    # ##print(json.dumps(tmp,indent=2))
 
 
 if __name__ == "__main__":
@@ -33,11 +32,11 @@ if __name__ == "__main__":
     jackPath = os.path.abspath(jackFilePath)
     filePath, fileName = os.path.split(jackPath)
     filePre, fileExt = os.path.splitext(fileName)
-    xmlPath = os.path.join(filePath, filePre + ".xml")
     if fileExt != ".jack":
       raise FileNotFoundError("File must be of type .jack")
-    pathData.append({"jackPath": jackPath, "filePre": filePre})
-    main(pathData, xmlPath)
+    xmlPath = os.path.join(filePath, "_" + filePre + "T.xml")
+    pathData.append({"jackPath": jackPath, "xmlPath": xmlPath})
+    main(pathData)
 
   elif os.path.isdir(jackFilePath):
     fullPath = os.path.abspath(jackFilePath)
@@ -48,9 +47,10 @@ if __name__ == "__main__":
       filePre, fileExt = os.path.splitext(fileName)
       if fileName.endswith(".jack"):
         jackPath = os.path.join(fullPath, fileName)
-        pathData.append({"jackPath": jackPath, "filePre": filePre})
+        xmlPath = os.path.join(fullPath, "_" + filePre + "T.xml")
+        pathData.append({"jackPath": jackPath, "xmlPath": xmlPath})
     if len(pathData) == 0:
       raise FileNotFoundError("File must be of type .jack")
-    main(pathData, xmlPath)
+    main(pathData)
   else:
     raise FileNotFoundError("File Not Found")

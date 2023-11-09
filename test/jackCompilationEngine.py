@@ -55,44 +55,81 @@
 
 ## x? 0 or 1 time -- x* 0 or more times
 
-##
-## compileClass
-## compileClassVarDec
-## compileSubroutine
-## compileParameterList
-## compileSubroutineBody
-## compileVarDec
-## compileStatements
-## compileLet
-## compileIf
-## compileWhile
-## compileDo
-## compileReturn
-## compileExpression
-## compileTerm
-## compileExpressionList
-##
 ## type, className, subroutineName, varName, statement, subroutineCall
 
 class CompliationEngine:
     def __init__(self, tokens):
         self.tokens = tokens
-        self.pointer = 0
-        self.currentToken = self.tokens[self.pointer]["value"];
+        self.tokenPtr = 0
+        self.currentToken = self.tokens[self.tokenPtr]["value"]
+        self.parseTree = []
+
+    def getNextToken(self, inc=1):
+        self.tokenPtr += inc
+        try:
+            return [self.tokens[self.tokenPtr-inc]["type"],self.tokens[self.tokenPtr-inc]["value"]]
+        except:
+            return ["",""] 
+    
+    def seeNextToken(self):
+        return self.getNextToken(0)
+
+
+def parser():
+    global parseTree
+
+    # expect class
+    type,value = getNextToken()
+    if type == "keyword" and value == "class":
+        parseTree.append({"type":"open","value":"class"})
+        parseTree.append({"type":type,"value":value})
+        compileClass()
+        parseTree.append({"type":"close","value":"class"})
+    else:
+        print("Error in parser(): {} {}".format(type,value))
+        exit(0)
+
 
     def parseTokens(self):
-        print(self.tokens[self.pointer]["type"], self.tokens[self.pointer]["value"])
+        # expect class
+        type,value = getNextToken()
+        if type == "keyword" and value == "class":
+            parseTree.append({"type":"open","value":"class"})
+            parseTree.append({"type":type,"value":value})
+            compileClass()
+            parseTree.append({"type":"close","value":"class"})
+        else:
+            print("Error in parser(): {} {}".format(type,value))
+            exit(0)
+            
+    def compileClass(self):
+        pass
+
+    def compileClassVarDec(self):
+        pass
+
+    def compileSubroutine(self):
+        pass
+
+    def compileParameterList(self):
+        pass
+
+    def compileSubroutineBody(self):
+        pass
+
+    def compileVarDec(self):
+        pass
 
     def compileStatements(self):
         pass
 
-    def compileIfStatement(self):
+    def compileLet(self):
         pass
 
-    def compileLetStatement(self):
+    def compileIf(self):
         pass
 
-    def compileWhileStatement(self):
+    def compileWhile(self):
         ## follow RHS of rule and parse accordingly
         ## 'while' '(' expression ')' '{' statements '}'
         self.eat("while") ## handle while
@@ -104,20 +141,20 @@ class CompliationEngine:
         self.eat("{") ## handle }
         pass
 
-    def compileTerm(self):
-        # varName | constant
+    def compileDo(self):
+        pass
+
+    def compileReturn(self):
         pass
 
     def compileExpression(self):
         ## term (op term)?
         pass
-    
-    def eat(self, string):
-        if (self.currentToken != string):
-            raise SyntaxError("Expecting {}, received {}".format(string,self.currentToken))
-        else:
-            self.advanceToken()
-    
-    def advanceToken(self):
-        self.pointer += 1
-        self.currentToken = self.tokens[self.pointer]["value"];
+
+    def compileTerm(self):
+        # varName | constant
+        pass
+
+    def compileExpressionList(self):
+        pass
+
