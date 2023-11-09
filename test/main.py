@@ -7,14 +7,16 @@ def main(pathData):
 
   for thisFile in pathData:
 
+    ## Initialize Tokenizer
     jackTkizr = jackTokenizer.Tokenizer(thisFile)
+    ## Parse Tokens
     tokens = jackTkizr.getTokens()
-    print(tokens)
     
-    # tokens = jackTkizr.getTokens()
-    # jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
-    # compiled = jackCmpEng.parseTokens()
-    # ##print(json.dumps(tmp,indent=2))
+    ## Initialize CompliationEngine
+    jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
+    ##
+    compiled = jackCmpEng.parseTokens()
+    print(json.dumps(compiled, indent=2))
 
 
 if __name__ == "__main__":

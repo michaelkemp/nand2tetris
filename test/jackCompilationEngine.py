@@ -57,6 +57,8 @@
 
 ## type, className, subroutineName, varName, statement, subroutineCall
 
+import json
+
 class CompliationEngine:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -65,57 +67,241 @@ class CompliationEngine:
         self.parseTree = []
 
     def getNextToken(self, inc=1):
-        self.tokenPtr += inc
-        try:
-            return [self.tokens[self.tokenPtr-inc]["type"],self.tokens[self.tokenPtr-inc]["value"]]
-        except:
+        if self.tokenPtr < len(self.tokens):
+            tkn = self.tokens[self.tokenPtr]
+            self.tokenPtr += inc
+            return [tkn["type"], tkn["value"]]
+        else:
             return ["",""] 
     
     def seeNextToken(self):
         return self.getNextToken(0)
 
 
-def parser():
-    global parseTree
-
-    # expect class
-    type,value = getNextToken()
-    if type == "keyword" and value == "class":
-        parseTree.append({"type":"open","value":"class"})
-        parseTree.append({"type":type,"value":value})
-        compileClass()
-        parseTree.append({"type":"close","value":"class"})
-    else:
-        print("Error in parser(): {} {}".format(type,value))
-        exit(0)
-
-
     def parseTokens(self):
         # expect class
-        type,value = getNextToken()
+        type,value = self.getNextToken()
         if type == "keyword" and value == "class":
-            parseTree.append({"type":"open","value":"class"})
-            parseTree.append({"type":type,"value":value})
-            compileClass()
-            parseTree.append({"type":"close","value":"class"})
+            self.parseTree.append({"type":"open","value":"class"})
+            self.parseTree.append({"type":type,"value":value})
+            try:
+                self.compileClass()
+            except SyntaxError as e:
+                print(json.dumps(self.parseTree, indent=2))
+                print(e)
+                exit(0)
+            self.parseTree.append({"type":"close","value":"class"})
         else:
-            print("Error in parser(): {} {}".format(type,value))
-            exit(0)
-            
+            raise SyntaxError("Expected keyword class - {} {}".format(type,value))
+        
+        return self.parseTree
+
     def compileClass(self):
-        pass
+
+        # expect <className>
+        type,value = self.getNextToken()
+        if type == "identifier":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected identifier className - {} {}".format(type,value))
+
+        # expect {
+        type,value = self.getNextToken()
+        if type == "symbol" and value == "{":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol {{ - {} {}".format(type,value))
+
+        # expect <classVarDec>*
+        type,value = self.seeNextToken()
+        while type == "keyword" and (value == "static" or value == "field"):
+            self.parseTree.append({"type":"open","value":"classVarDec"})
+            self.compileClassVarDec()
+            self.parseTree.append({"type":"close","value":"classVarDec"})
+            type,value = self.seeNextToken()
+
+        # expect <subroutineDec>*
+        type,value = self.seeNextToken()    
+        while type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+            self.parseTree.append({"type":"open","value":"subroutineDec"})
+            self.compileSubroutineDec()
+            self.parseTree.append({"type":"close","value":"subroutineDec"})
+            type,value = self.seeNextToken()
+
+        # expect }
+        type,value = self.getNextToken()
+        if type == "symbol" and value == "}":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol }} - {} {}".format(type,value))
+
 
     def compileClassVarDec(self):
-        pass
+        # expect 'static' | 'field' 
+        type,value = self.getNextToken()
+        if type == "keyword" and (value == "static" or value == "field"):
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected keyword static|field - {} {}".format(type,value))
 
-    def compileSubroutine(self):
-        pass
+        ################ TYPE ################
+        # expect 'int' | 'char' | 'boolean' | <className>
+        type,value = self.getNextToken()
+        if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected keyword int|char|boolean | identifier - {} {}".format(type,value))
+
+        ################ VARNAME ################
+        # expect <varName>
+        type,value = self.getNextToken()
+        if type == "identifier":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected identifier - {} {}".format(type,value))
+
+        # maybe more <varName>
+        type,value = self.seeNextToken()
+        while (type == "symbol" and value == ","):
+
+            # expect ,
+            type,value = self.getNextToken()
+            if type == "symbol" and value == ",":
+                self.parseTree.append({"type":type,"value":value})
+            else:
+                raise SyntaxError("Expected symbol , - {} {}".format(type,value))
+
+            # expect <varName>
+            type,value = self.getNextToken()
+            if type == "identifier":
+                self.parseTree.append({"type":type,"value":value})
+            else:
+                raise SyntaxError("Expected identifier - {} {}".format(type,value))
+
+            type,value = self.seeNextToken()
+
+        # expect ;
+        type,value = self.getNextToken()
+        if type == "symbol" and value == ";":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol ; - {} {}".format(type,value))
+
+
+    def compileSubroutineDec(self):
+        # expect 'constructor' | 'function' | 'method' 
+        type,value = self.getNextToken()
+        if type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected keyword constructor|function|method - {} {}".format(type,value))
+
+        # expect 'void' | 'int' | 'char' | 'boolean' | <className>
+        type,value = self.getNextToken()
+        if (type == "keyword" and (value == "void" or value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected keyword void|int|char|boolean | identifier - {} {}".format(type,value))
+
+        ################ SUBROUTINENAME ################
+        # expect <subroutineName>
+        type,value = self.getNextToken()
+        if type == "identifier":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected identifier - {} {}".format(type,value))
+
+        # expect (
+        type,value = self.getNextToken()
+        if type == "symbol" and value == "(":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol ( - {} {}".format(type,value))
+
+        self.parseTree.append({"type":"open","value":"parameterList"})
+        self.compileParameterList()
+        self.parseTree.append({"type":"close","value":"parameterList"})
+
+        # expect )
+        type,value = self.getNextToken()
+        if type == "symbol" and value == ")":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol ) - {} {}".format(type,value))
+
+        self.parseTree.append({"type":"open","value":"subroutineBody"})
+        self.compileSubroutineBody()
+        self.parseTree.append({"type":"close","value":"subroutineBody"})
+
 
     def compileParameterList(self):
-        pass
+        ## No Parameter List
+        type,value = self.seeNextToken()
+        if type == "symbol" and value == ")":
+            return
+
+        while True:
+            # expect 'int' | 'char' | 'boolean' | <className>
+            type,value = self.getNextToken()
+            if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+                self.parseTree.append({"type":type,"value":value})
+            else:
+                raise SyntaxError("Expected keyword int|char|boolean | identifier - {} {}".format(type,value))
+
+            # expect <varName>
+            type,value = self.getNextToken()
+            if type == "identifier":
+                self.parseTree.append({"type":type,"value":value})
+            else:
+                raise SyntaxError("Expected identifier - {} {}".format(type,value))
+
+            # maybe more <type> <varName>
+            type,value = self.seeNextToken()
+            if type == "symbol" and value == ",":
+                type,value = self.getNextToken()
+                self.parseTree.append({"type":type,"value":value})
+            elif type == "symbol" and value == ")":
+                return
+            else:
+                raise SyntaxError("Expected symbol ,|) - {} {}".format(type,value))
+
+#   <subroutineBody>    =>  '{' <varDec>* <statements> '}'
+
+# <varDec>            =>  'var' <type> <varName> (',' <varName>)* ';'
+
 
     def compileSubroutineBody(self):
-        pass
+        # expect {
+        type,value = self.getNextToken()
+        if type == "symbol" and value == "{":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol {{ - {} {}".format(type,value))
+
+        # expect <varDec>*
+        type,value = self.seeNextToken()
+        if type == "keyword" and value == "var":
+            self.parseTree.append({"type":"open","value":"varDec"})
+            self.compileVarDec()
+            self.parseTree.append({"type":"close","value":"varDec"})
+
+        # expect <subroutineDec>*
+        type,value = self.seeNextToken()    
+        while type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+            self.parseTree.append({"type":"open","value":"subroutineDec"})
+            self.compileSubroutineDec()
+            self.parseTree.append({"type":"close","value":"subroutineDec"})
+            type,value = self.seeNextToken()
+
+        # expect }
+        type,value = self.getNextToken()
+        if type == "symbol" and value == "}":
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected symbol }} - {} {}".format(type,value))
+
+
+
 
     def compileVarDec(self):
         pass
