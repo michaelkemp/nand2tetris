@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, os, json
-import jackTokenizer
+import jackTokenizer, jackCompilationEngine
 
 def main(pathData, xmlPath):
 
@@ -12,8 +12,10 @@ def main(pathData, xmlPath):
       jack = fp.read()
 
     jackTkizr = jackTokenizer.Tokenizer(jack)
-    tmp = jackTkizr.getTokens()
-    print(json.dumps(tmp,indent=2))
+    tokens = jackTkizr.getTokens()
+    jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
+    compiled = jackCmpEng.parseTokens()
+    ##print(json.dumps(tmp,indent=2))
 
 
 if __name__ == "__main__":

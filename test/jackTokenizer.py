@@ -14,18 +14,18 @@ class Tokenizer:
         found = False
 
         # whitespace
-        while re.search("^\s", self.jack):
+        while re.search("^\s", self.jack): ## \s matches unicode whitespace including \t\n\r\f\v
             self.jack = self.jack[1:]
 
         # inline comment
-        if re.search("^//.*", self.jack):
+        if re.search("^//.*", self.jack): ## . matches everything except newline
             theMatch = re.match("^//.*", self.jack).group(0)
             self.jack = self.jack[len(theMatch):]
             continue
 
         # multiline comment
-        if re.search("^/\*[\s\S]*?\*/", self.jack):
-            theMatch = re.match("^/\*[\s\S]*?\*/", self.jack).group(0)
+        if re.search("^/\*[\s\S]*?\*/", self.jack): ## \S matches any NON whitespace character (This is the oposite of \s )
+            theMatch = re.match("^/\*[\s\S]*?\*/", self.jack).group(0) ## *? is the greedy quantifier -- matching as many characters as possible before reaching */
             self.jack = self.jack[len(theMatch):]
             continue
 
@@ -38,9 +38,9 @@ class Tokenizer:
             self.tokens.append({"type":type,"value":value})
             found = True
 
-        # identifier
-        if re.search("^([a-zA-Z]+|_+)(\w)*", self.jack):
-            theMatch = re.match("^([a-zA-Z]+|_+)(\w)*", self.jack).group(0)
+        # identifiers and keywords 
+        if re.search("^([_a-zA-Z]{1})([\w]*)", self.jack): ## \w matches unicode word characters including alpha, numeric and underscore
+            theMatch = re.match("^([_a-zA-Z]{1})([\w]*)", self.jack).group(0)
             self.jack = self.jack[len(theMatch):]
             if theMatch in self.keywords:
                 type = "keyword"
@@ -64,7 +64,7 @@ class Tokenizer:
                 found = True
 
         # integers
-        if re.search("^\d+", self.jack):
+        if re.search("^\d+", self.jack): ## \d matches unicode decimal digits
             theMatch = re.match("^\d+", self.jack).group(0)
             self.jack = self.jack[len(theMatch):]
             type = "integerConstant"
@@ -76,6 +76,7 @@ class Tokenizer:
 
         # error
         if len(self.jack) > 0 and not found:
-            raise SyntaxError("Syntax Error: {}".format(self.jack))
+            theMatch = re.match("^[\S]+", self.jack).group(0)
+            raise SyntaxError("Syntax Error: {}".format(theMatch))
             
     return self.tokens
