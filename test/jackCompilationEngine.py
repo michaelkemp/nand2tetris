@@ -40,7 +40,7 @@
 #   <statements>        =>  <statement>*
 #   <statement>         =>  <letStatement> | <ifStatement> | <whileStatement> | <doStatement> | <returnStatement>
 #   <letStatement>      =>  'let' <varName> ('[' <expression> ']')? '=' <expression> ';'
-#   <ifStatement>       =>  'if' '(' <expression> ')' '{' <statements> '}' ('else' '{' statements> '}')?
+#   <ifStatement>       =>  'if' '(' <expression> ')' '{' <statements> '}' ('else' '{' <statements> '}')?
 #   <whileStatement>    =>  'while' '(' <expression> ')' '{' <statements> '}'
 #   <doStatement>       =>  'do' <subroutineCall> ';'
 #   <returnStatement>   =>  'return' <expression>? ';'
@@ -87,11 +87,10 @@ class CompliationEngine:
 
     def eat(self, expType, expValues=None):
         type,value = self.getNextToken()
-        if type == expType and expValues is None:
-            self.parseTree.append({"type":type,"value":value})
-        elif type == expType and value in expValues:
+        if (type == expType and expValues is None) or (type == expType and value in expValues):
             self.parseTree.append({"type":type,"value":value})
         else:
+            print("----",self.parseTree,"-----")
             raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), type, value))
 
     ## <type> => 'int' | 'char' | 'boolean' | <className>
@@ -127,11 +126,10 @@ class CompliationEngine:
 
         # expect {
         self.eat("symbol", ["{"])
-        type,value = self.getNextToken()
 
         # expect <classVarDec>*
         type,value = self.seeNextToken()
-        while type == "keyword" and (value == "static" or value == "field"):
+        while type == "keyword" and value in["static", "field"]:
             self.parseTree.append({"type":"open","value":"classVarDec"})
             self.compileClassVarDec()
             self.parseTree.append({"type":"close","value":"classVarDec"})
@@ -139,7 +137,7 @@ class CompliationEngine:
 
         # expect <subroutineDec>*
         type,value = self.seeNextToken()    
-        while type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
+        while type == "keyword" and value in ["constructor", "function", "method"]:
             self.parseTree.append({"type":"open","value":"subroutineDec"})
             self.compileSubroutineDec()
             self.parseTree.append({"type":"close","value":"subroutineDec"})
@@ -231,13 +229,8 @@ class CompliationEngine:
             self.parseTree.append({"type":"close","value":"varDec"})
             type,value = self.seeNextToken()
 
-        # expect <subroutineDec>*
-        type,value = self.seeNextToken()    
-        while type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
-            self.parseTree.append({"type":"open","value":"subroutineDec"})
-            self.compileSubroutineDec()
-            self.parseTree.append({"type":"close","value":"subroutineDec"})
-            type,value = self.seeNextToken()
+        # expect <statements>
+        self.compileStatements()
 
         # expect }
         self.eat("symbol", ["}"])
@@ -260,44 +253,201 @@ class CompliationEngine:
             if type == "symbol" and value == ",":
                 self.eat("symbol", [","])
             else:
-                return
+                break
+        
+        # expect ';'
+        self.eat("symbol", [";"])
 
 
+
+    ## <statements> => <statement>*
+    ## <statement> => <letStatement> | <ifStatement> | <whileStatement> | <doStatement> | <returnStatement>
     def compileStatements(self):
-        pass
+        type,value = self.seeNextToken()
+        while type == "keyword" and value in ["let","if","while","do","return"]:
+            match value:
+                case "let":
+                    self.parseTree.append({"type":"open","value":"letStatement"})
+                    self.compileLet()
+                    self.parseTree.append({"type":"close","value":"letStatement"})
+                case "if":
+                    self.parseTree.append({"type":"open","value":"ifStatement"})
+                    self.compileIf()
+                    self.parseTree.append({"type":"close","value":"ifStatement"})
+                case "while":
+                    self.parseTree.append({"type":"open","value":"whileStatement"})
+                    self.compileWhile()
+                    self.parseTree.append({"type":"close","value":"whileStatement"})
+                case "do":
+                    self.parseTree.append({"type":"open","value":"doStatement"})
+                    self.compileDo()
+                    self.parseTree.append({"type":"close","value":"doStatement"})
+                case "return":
+                    self.parseTree.append({"type":"open","value":"returnStatement"})
+                    self.compileReturn()
+                    self.parseTree.append({"type":"close","value":"returnStatement"})
 
+
+
+    ## <letStatement> => 'let' <varName> ('[' <expression> ']')? '=' <expression> ';'
     def compileLet(self):
-        pass
+        # expect let
+        self.eat("keyword",["let"])
 
-    def compileIf(self):
-        pass
+        # expect <varName>
+        self.eatName()
 
-    def compileWhile(self):
-        ## follow RHS of rule and parse accordingly
-        ## 'while' '(' expression ')' '{' statements '}'
-        self.eat("while") ## handle while
-        self.eat("(") ## handle (
+        # expect ('[' <expression> ']')?
+        type,value = self.seeNextToken()
+        if type == "symbol" and value == "[":
+            self.eat("symbol",["["])
+            self.parseTree.append({"type":"open","value":"expression"})
+            self.compileExpression()
+            self.parseTree.append({"type":"close","value":"expression"})
+            self.eat("symbol",["]"])
+        
+        # expect =
+        self.eat("symbol",["="])
+
+        # expect <expression>
+        self.parseTree.append({"type":"open","value":"expression"})
         self.compileExpression()
-        self.eat(")") ## handle )
-        self.eat("{") ## handle {
+        self.parseTree.append({"type":"close","value":"expression"})
+
+        # expect ;
+        self.eat("symbol",[";"])
+        
+
+
+    ## <ifStatement> => 'if' '(' <expression> ')' '{' <statements> '}' ('else' '{' <statements> '}')?
+    def compileIf(self):
+        # expect if
+        self.eat("keyword",["if"])
+
+        # expect (
+        self.eat("symbol",["("])
+        # expect <expression>
+        self.parseTree.append({"type":"open","value":"expression"})
+        self.compileExpression()
+        self.parseTree.append({"type":"close","value":"expression"})
+        # expect )
+        self.eat("symbol",[")"])
+
+        # expect {
+        self.eat("symbol",["{"])
+        # expect <statements>
+        self.parseTree.append({"type":"open","value":"statements"})
         self.compileStatements()
-        self.eat("{") ## handle }
-        pass
+        self.parseTree.append({"type":"close","value":"statements"})
+        # expect }
+        self.eat("symbol",["}"])
 
+        # expect ('else' '{' <statements> '}')?
+        type,value = self.seeNextToken()
+        if type == "keyword" and value == "else":
+            self.eat("keyword",["else"])
+            self.eat("symbol",["{"])
+            self.parseTree.append({"type":"open","value":"statements"})
+            self.compileStatements()
+            self.parseTree.append({"type":"close","value":"statements"})
+            self.eat("symbol",["}"])
+
+
+
+    ## <whileStatement> => 'while' '(' <expression> ')' '{' <statements> '}'
+    def compileWhile(self):
+        # expect while
+        self.eat("keyword",["while"])
+
+        # expect (
+        self.eat("symbol",["("])
+        # expect <expression>
+        self.parseTree.append({"type":"open","value":"expression"})
+        self.compileExpression()
+        self.parseTree.append({"type":"close","value":"expression"})
+        # expect )
+        self.eat("symbol",[")"])
+
+        # expect {
+        self.eat("symbol",["{"])
+        # expect <statements>
+        self.parseTree.append({"type":"open","value":"statements"})
+        self.compileStatements()
+        self.parseTree.append({"type":"close","value":"statements"})
+        # expect }
+        self.eat("symbol",["}"])
+
+
+
+    ## <doStatement> => 'do' <subroutineCall> ';'
     def compileDo(self):
-        pass
+        # expect do
+        self.eat("keyword",["do"])
+        self.parseTree.append({"type":"open","value":"statements"})
+        self.compileSubroutineCall()
+        self.parseTree.append({"type":"close","value":"statements"})
+        # expect ;
+        self.eat("symbol",[";"])
 
+
+
+    ## <returnStatement> => 'return' <expression>? ';'
     def compileReturn(self):
-        pass
+        # expect return
+        self.eat("keyword",["return"])
 
+        # expect <expression>?
+        type,value = self.seeNextToken()
+        if type == "symbol" and value == ";":
+            self.eat("symbol",[";"])
+        else:
+            self.parseTree.append({"type":"open","value":"expression"})
+            self.compileExpression()
+            self.parseTree.append({"type":"close","value":"expression"})
+            self.eat("symbol",[";"])
+
+
+    ## <expression> => <term> (<op> <term>)*
     def compileExpression(self):
-        ## term (op term)?
         pass
 
+    ## <term> => integerConstant | stringConstant | keywordConstant | <varName> | <varName> '[' <expression> ']' | <subroutineCall> | '(' <expression> ')' | unaryOp <term>
     def compileTerm(self):
-        # varName | constant
         pass
 
+
+
+
+#   <op>                =>  '+' | '-' | '*' | '/' | '&' | '|' | '<' | '>' | '='
+#   <unaryOp>           =>  '-' | '~'
+#   <keywordConstant>   =>  'true' | 'false' | 'null' | 'this'
+
+
+
+    ## <expressionList> => ( <expression> (',' <expression>)* )?
     def compileExpressionList(self):
-        pass
+        type,value = self.seeNextToken()
+        while (type in ["integerConstant","stringConstant","keyword","identifier"]) or (type == "symbol" and value in ["(","-","~"]):
+            self.compileExpression()
+            type,value = self.seeNextToken()
+            if type == "symbol" and value == ",":
+                self.eat("symbol", [","])
+            else:
+                break
 
+    ## <subroutineCall> => <subroutineName> '(' <expressionList> ')' | (<className>|<varName>) '.' <subroutineName> '(' <expressionList> ')' 
+    def compileSubroutineCall(self):
+        # expect Name
+        self.eatName()
+        type,value = self.seeNextToken()
+        if type == "symbol" and value == ".":
+            self.eat("symbol",["."])
+            self.eatName()
+        
+        # expect (
+        self.eat("symbol",["("])    
+        self.parseTree.append({"type":"open","value":"expressionList"})
+        self.compileExpressionList()
+        self.parseTree.append({"type":"close","value":"expressionList"})
+        # expect )
+        self.eat("symbol",[")"])    
