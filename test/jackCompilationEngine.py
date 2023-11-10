@@ -79,38 +79,55 @@ class CompliationEngine:
 
 
     def parseTokens(self):
-        # expect class
-        type,value = self.getNextToken()
-        if type == "keyword" and value == "class":
-            self.parseTree.append({"type":"open","value":"class"})
-            self.parseTree.append({"type":type,"value":value})
-            try:
-                self.compileClass()
-            except SyntaxError as e:
-                print(json.dumps(self.parseTree, indent=2))
-                print(e)
-                exit(0)
-            self.parseTree.append({"type":"close","value":"class"})
-        else:
-            raise SyntaxError("Expected keyword class - {} {}".format(type,value))
-        
+        self.parseTree.append({"type":"open","value":"class"})
+        self.compileClass()
+        self.parseTree.append({"type":"close","value":"class"})
         return self.parseTree
 
-    def compileClass(self):
 
-        # expect <className>
+    def eat(self, expType, expValues=None):
+        type,value = self.getNextToken()
+        if type == expType and expValues is None:
+            self.parseTree.append({"type":type,"value":value})
+        elif type == expType and value in expValues:
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), type, value))
+
+    ## <type> => 'int' | 'char' | 'boolean' | <className>
+    def eatType(self, incVoid=False):
+        expValues = ["int","char","boolean"]
+        if incVoid:
+            expValues.append("void")
+        type,value = self.getNextToken()
+        if (type == "keyword" and value in expValues) or (type == "identifier"):
+            self.parseTree.append({"type":type,"value":value})
+        else:
+            raise SyntaxError("Type Error [{} {}]".format(type,value))
+        
+    ## <className> => identifier
+    ## <subroutineName> => identifier
+    ## <varName> => identifier    
+    def eatName(self):
         type,value = self.getNextToken()
         if type == "identifier":
             self.parseTree.append({"type":type,"value":value})
         else:
-            raise SyntaxError("Expected identifier className - {} {}".format(type,value))
+            raise SyntaxError("Name Error [{} {}]".format(type,value))
+        
+    
+    ## <class> => 'class' <className> '{' <classVarDec>* <subroutineDec>* '}'
+    def compileClass(self):
+
+        # expect 'class'
+        self.eat("keyword", ["class"])
+
+        # expect <className>
+        self.eat("identifier")
 
         # expect {
+        self.eat("symbol", ["{"])
         type,value = self.getNextToken()
-        if type == "symbol" and value == "{":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol {{ - {} {}".format(type,value))
 
         # expect <classVarDec>*
         type,value = self.seeNextToken()
@@ -129,161 +146,90 @@ class CompliationEngine:
             type,value = self.seeNextToken()
 
         # expect }
-        type,value = self.getNextToken()
-        if type == "symbol" and value == "}":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol }} - {} {}".format(type,value))
+        self.eat("symbol", ["}"])
 
 
+    ## <classVarDec> => ('static' | 'field') <type> <varName> (',' <varName>)* ';'
     def compileClassVarDec(self):
+
         # expect 'static' | 'field' 
-        type,value = self.getNextToken()
-        if type == "keyword" and (value == "static" or value == "field"):
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected keyword static|field - {} {}".format(type,value))
+        self.eat("keyword",["static","field"])
 
-        ################ TYPE ################
-        # expect 'int' | 'char' | 'boolean' | <className>
-        type,value = self.getNextToken()
-        if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected keyword int|char|boolean | identifier - {} {}".format(type,value))
+        # expect <type>
+        self.eatType()
 
-        ################ VARNAME ################
         # expect <varName>
-        type,value = self.getNextToken()
-        if type == "identifier":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected identifier - {} {}".format(type,value))
+        self.eatName()
 
         # maybe more <varName>
         type,value = self.seeNextToken()
         while (type == "symbol" and value == ","):
-
             # expect ,
-            type,value = self.getNextToken()
-            if type == "symbol" and value == ",":
-                self.parseTree.append({"type":type,"value":value})
-            else:
-                raise SyntaxError("Expected symbol , - {} {}".format(type,value))
-
+            self.eat("symbol", [","])
             # expect <varName>
-            type,value = self.getNextToken()
-            if type == "identifier":
-                self.parseTree.append({"type":type,"value":value})
-            else:
-                raise SyntaxError("Expected identifier - {} {}".format(type,value))
-
+            self.eatName()
             type,value = self.seeNextToken()
 
         # expect ;
-        type,value = self.getNextToken()
-        if type == "symbol" and value == ";":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol ; - {} {}".format(type,value))
+        self.eat("symbol", [";"])
 
 
+    ## <subroutineDec> => ('constructor' | 'function' | 'method') ('void' | <type>) <subroutineName> '(' <parameterList> ')' <subroutineBody>
     def compileSubroutineDec(self):
-        # expect 'constructor' | 'function' | 'method' 
-        type,value = self.getNextToken()
-        if type == "keyword" and (value == "constructor" or value == "function" or value == "method"):
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected keyword constructor|function|method - {} {}".format(type,value))
+        # expect 'constructor' | 'function' | 'method'
+        self.eat("keyword",["constructor","function","method"])
+ 
+        # expect 'void' | <type>
+        self.eatType(True) ## invVoid
 
-        # expect 'void' | 'int' | 'char' | 'boolean' | <className>
-        type,value = self.getNextToken()
-        if (type == "keyword" and (value == "void" or value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected keyword void|int|char|boolean | identifier - {} {}".format(type,value))
-
-        ################ SUBROUTINENAME ################
         # expect <subroutineName>
-        type,value = self.getNextToken()
-        if type == "identifier":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected identifier - {} {}".format(type,value))
+        self.eatName()
 
         # expect (
-        type,value = self.getNextToken()
-        if type == "symbol" and value == "(":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol ( - {} {}".format(type,value))
+        self.eat("symbol", ["("])
 
         self.parseTree.append({"type":"open","value":"parameterList"})
         self.compileParameterList()
         self.parseTree.append({"type":"close","value":"parameterList"})
 
         # expect )
-        type,value = self.getNextToken()
-        if type == "symbol" and value == ")":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol ) - {} {}".format(type,value))
+        self.eat("symbol", [")"])
 
         self.parseTree.append({"type":"open","value":"subroutineBody"})
         self.compileSubroutineBody()
         self.parseTree.append({"type":"close","value":"subroutineBody"})
 
 
+    ## <parameterList> => (<type> <varName> (',' <type> <varName>)* )?
     def compileParameterList(self):
-        ## No Parameter List
         type,value = self.seeNextToken()
-        if type == "symbol" and value == ")":
-            return
+        if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+            while True:
+                # expect <type>
+                self.eatType()
 
-        while True:
-            # expect 'int' | 'char' | 'boolean' | <className>
-            type,value = self.getNextToken()
-            if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
-                self.parseTree.append({"type":type,"value":value})
-            else:
-                raise SyntaxError("Expected keyword int|char|boolean | identifier - {} {}".format(type,value))
+                # expect <varName>
+                self.eatName()
 
-            # expect <varName>
-            type,value = self.getNextToken()
-            if type == "identifier":
-                self.parseTree.append({"type":type,"value":value})
-            else:
-                raise SyntaxError("Expected identifier - {} {}".format(type,value))
+                # maybe more <type> <varName>
+                type,value = self.seeNextToken()
+                if type == "symbol" and value == ",":
+                    self.eat("symbol", [","])
+                else:
+                    return
 
-            # maybe more <type> <varName>
-            type,value = self.seeNextToken()
-            if type == "symbol" and value == ",":
-                type,value = self.getNextToken()
-                self.parseTree.append({"type":type,"value":value})
-            elif type == "symbol" and value == ")":
-                return
-            else:
-                raise SyntaxError("Expected symbol ,|) - {} {}".format(type,value))
-
-#   <subroutineBody>    =>  '{' <varDec>* <statements> '}'
-
-# <varDec>            =>  'var' <type> <varName> (',' <varName>)* ';'
-
-
+    ## <subroutineBody> => '{' <varDec>* <statements> '}'
     def compileSubroutineBody(self):
         # expect {
-        type,value = self.getNextToken()
-        if type == "symbol" and value == "{":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol {{ - {} {}".format(type,value))
+        self.eat("symbol", ["{"])
 
         # expect <varDec>*
         type,value = self.seeNextToken()
-        if type == "keyword" and value == "var":
+        while type == "keyword" and value == "var":
             self.parseTree.append({"type":"open","value":"varDec"})
             self.compileVarDec()
             self.parseTree.append({"type":"close","value":"varDec"})
+            type,value = self.seeNextToken()
 
         # expect <subroutineDec>*
         type,value = self.seeNextToken()    
@@ -294,17 +240,28 @@ class CompliationEngine:
             type,value = self.seeNextToken()
 
         # expect }
-        type,value = self.getNextToken()
-        if type == "symbol" and value == "}":
-            self.parseTree.append({"type":type,"value":value})
-        else:
-            raise SyntaxError("Expected symbol }} - {} {}".format(type,value))
+        self.eat("symbol", ["}"])
 
 
-
-
+    ## <varDec> => 'var' <type> <varName> (',' <varName>)* ';'
     def compileVarDec(self):
-        pass
+        # expect 'var'
+        self.eat("keyword", ["var"])
+
+        # expect <type>
+        self.eatType()
+
+        while True:
+            # expect <varName>
+            self.eatName()
+
+            # maybe more <varName>
+            type,value = self.seeNextToken()
+            if type == "symbol" and value == ",":
+                self.eat("symbol", [","])
+            else:
+                return
+
 
     def compileStatements(self):
         pass
