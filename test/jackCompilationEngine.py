@@ -114,7 +114,6 @@ class CompliationEngine:
         else:
             raise SyntaxError("Name Error [{} {}]".format(type,value))
         
-    
     ## <class> => 'class' <className> '{' <classVarDec>* <subroutineDec>* '}'
     def compileClass(self):
 
@@ -286,7 +285,7 @@ class CompliationEngine:
                     self.parseTree.append({"type":"open","value":"returnStatement"})
                     self.compileReturn()
                     self.parseTree.append({"type":"close","value":"returnStatement"})
-
+            type,value = self.seeNextToken()
 
 
     ## <letStatement> => 'let' <varName> ('[' <expression> ']')? '=' <expression> ';'
@@ -409,19 +408,44 @@ class CompliationEngine:
 
     ## <expression> => <term> (<op> <term>)*
     def compileExpression(self):
-        pass
+        self.parseTree.append({"type":"open","value":"term"})
+        self.compileTerm()
+        self.parseTree.append({"type":"close","value":"term"})
+        type,value = self.seeNextToken()
+        while type == "symbol" and value in ["+","-","*","/","&","|","<",">","="]:
+            self.eat("symbol",[value])
+            self.parseTree.append({"type":"open","value":"term"})
+            self.compileTerm()
+            self.parseTree.append({"type":"close","value":"term"})
+            type,value = self.seeNextToken()
+ 
 
     ## <term> => integerConstant | stringConstant | keywordConstant | <varName> | <varName> '[' <expression> ']' | <subroutineCall> | '(' <expression> ')' | unaryOp <term>
     def compileTerm(self):
-        pass
-
-
-
-
-#   <op>                =>  '+' | '-' | '*' | '/' | '&' | '|' | '<' | '>' | '='
-#   <unaryOp>           =>  '-' | '~'
-#   <keywordConstant>   =>  'true' | 'false' | 'null' | 'this'
-
+        type,value = self.seeNextToken()
+        match type:
+            case "integerConstant" | "stringConstant" | "keyword":
+                self.eat(type)
+            case "symbol":
+                match value:
+                    case "(":
+                        self.eat("symbol",["("])
+                        self.compileExpression()
+                        self.eat("symbol",[")"])
+                    case "-" | "~":
+                        self.eat("symbol",[value])
+                        self.compileTerm()
+            case "identifier":
+                # <varName> | <varName> '[' <expression> ']' | <subroutineCall>
+                self.eatName()
+                type,value = self.seeNextToken()
+                match value:
+                    case "[":
+                        self.eat("symbol",["["])
+                        self.compileExpression()
+                        self.eat("symbol",["]"])
+                    case "(":
+                        self.compileSubroutineCall(False)
 
 
     ## <expressionList> => ( <expression> (',' <expression>)* )?
@@ -436,9 +460,11 @@ class CompliationEngine:
                 break
 
     ## <subroutineCall> => <subroutineName> '(' <expressionList> ')' | (<className>|<varName>) '.' <subroutineName> '(' <expressionList> ')' 
-    def compileSubroutineCall(self):
-        # expect Name
-        self.eatName()
+    def compileSubroutineCall(self, eatName = True):
+        if eatName:
+            # expect Name
+            self.eatName()
+
         type,value = self.seeNextToken()
         if type == "symbol" and value == ".":
             self.eat("symbol",["."])
