@@ -302,7 +302,9 @@ class CompliationEngine:
                     # unaryOP term        
                     case "-" | "~":
                         self.eat("symbol",[value])
+                        self.parseTree.append({"type":"open","value":"term"})
                         self.compileTerm()
+                        self.parseTree.append({"type":"close","value":"term"})
             case "identifier":
                 # varName | varName '[' expression ']' | subroutineCall
                 self.eat("identifier")
