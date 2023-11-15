@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, os, json
+import sys, os
 import jackTokenizer, jackCompilationEngine
 
 def main(pathData):
