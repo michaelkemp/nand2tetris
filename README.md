@@ -73,7 +73,7 @@
 
 # Part 2
 
-## Unit 1:
+## Project 7:
 - https://drive.google.com/file/d/1BPmhMLu_4QTcte0I5bK4QBHI8SACnQSt/view
 - https://www.youtube.com/watch?v=KBTg0ju4rxM
 - https://www.youtube.com/watch?v=E28KczysecE
@@ -87,7 +87,7 @@
 - https://www.youtube.com/watch?v=-ah0p72Kbz8
 - https://www.youtube.com/watch?v=j0qDp2iq3LA
 
-## Unit 2:
+## Project 8:
 - https://drive.google.com/file/d/1BexrNmdqYhKPkqD_Y81qNAUeyfzl-ZtO/view
 - https://www.youtube.com/watch?v=UhC20aAl8IM
 - https://www.youtube.com/watch?v=0fWjbGza6TI
@@ -100,7 +100,7 @@
 - https://www.youtube.com/watch?v=J9AwAgPME5Q
 - https://www.youtube.com/watch?v=HoLgUZyLPEg
 
-## Unit 3:
+## Project 9:
 - https://drive.google.com/file/d/1CAGF8d3pDIOgqX8NZGzU34PPEzvfTYrk/view
 - https://www.youtube.com/watch?v=YKkG97oqpxw
 - https://www.youtube.com/watch?v=0LYovergElE
@@ -114,7 +114,7 @@
 - https://www.youtube.com/watch?v=7Z1QoahPrBg
 - https://www.youtube.com/watch?v=YuNWwK7TRuQ
 
-## Unit 4:
+## Project 10:
 - https://drive.google.com/file/d/1CM_w6cxQpYnYHcP-OhNkNU6oD5rMnjzv/view
 - https://www.youtube.com/watch?v=S-6pdViiezU
 - https://www.youtube.com/watch?v=8MVWOBF-7Mg
@@ -127,7 +127,7 @@
 - https://www.youtube.com/watch?v=KgzpIIAvPpk
 - https://www.youtube.com/watch?v=QM-4Z16Yus4
 
-## Unit 5:
+## Project 11:
 - https://drive.google.com/file/d/1CYOcXKxfAwRHaOERvoyuNKSwdlxMo_e3/view
 - https://www.youtube.com/watch?v=X0NWLeitY80
 - https://www.youtube.com/watch?v=eU2ZrJQI5vE
@@ -142,7 +142,7 @@
 - https://www.youtube.com/watch?v=SAVh9tDBAPc
 - https://www.youtube.com/watch?v=NP1LyrNKzMg
 
-## Unit 6:
+## Project 12:
 - https://drive.google.com/file/d/137PiYjt4CAZ3ROWiD0DJ8XMUbMM0_VHR/view
 - https://www.youtube.com/watch?v=IC7f-lEhfes
 - https://www.youtube.com/watch?v=7lWjTKWK8D8
@@ -159,7 +159,7 @@
 - https://www.youtube.com/watch?v=SqPk51suWEk
 - https://www.youtube.com/watch?v=t1tyx27dDHk
 
-## Unit 7:
+## Project 13:
 - https://www.youtube.com/watch?v=Sbw2UuIaohI
 - https://www.youtube.com/watch?v=jFW4EstOB8g
 - https://www.youtube.com/watch?v=1ZmHE0Alfvs
