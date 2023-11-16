@@ -124,9 +124,9 @@ class Assembler:
         
   
 
-
     def addLabel(self, label, lineNumber):
         self.VARIABLES[label] = lineNumber
+
 
     def hack(self):
         hack = []
@@ -136,6 +136,7 @@ class Assembler:
             else:
                 hack.append(self.ccom(command))
         return hack
+
 
     def acom(self, command):
         ## Strip @ from start of command

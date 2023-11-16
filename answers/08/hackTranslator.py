@@ -1,65 +1,103 @@
 import re
 
 class Translator:
-    def __init__(self, vm, staticName = "static"):
+    def __init__(self, pathData):
 
-        self.vm = vm
-        self.staticName = staticName
+        self.pathData = pathData
 
+        self.asm = ""
         self.jmpCnt = 0
         self.retCnt = 0
 
         self.disordat = {'0':'THIS', '1':'THAT'}
         self.segNames = {'local':'LCL', 'argument':'ARG', 'this':'THIS', 'that':'THAT'}
 
-    def parse(self):
-        asm = []
-        for expression in self.vm:
+        ## Bootstrap (Set Stack Pointer to 256, call Sys.init)
+        self.staticName = "BOOTSTRAP"
+        BOOTSTRAP = "//BOOTSTRAP,@256,D=A,@SP,M=D,".replace(",","\n")
+        BOOTSTRAP += self.parse(["call Sys.init 0"])
+        ADDBSTRAP = False
+
+        for pd in self.pathData:
+            self.staticName = pd["filePre"]
+            vmPath = pd["vmPath"]
+            with open(vmPath) as fp:
+                vm = []
+                prog = fp.readlines()
+                for line in prog:
+                    ## Strip leading and trailing spaces
+                    line = line.strip()
+                    ## Skip blank lines
+                    if line == "":
+                        continue
+                    ## Skip comment lines -- lines that begin with //
+                    if re.match("^//", line) is not None:
+                        continue
+                    ## Remove inline comments
+                    line = line.split("//", 1)[0].strip()
+                    vm.append(line)
+                    if line == "function Sys.init 0":
+                        ADDBSTRAP = True
+
+                self.asm += self.parse(vm)
+
+    
+        if ADDBSTRAP:
+            self.asm = BOOTSTRAP + self.asm
+
+
+    def getAssembly(self):
+        return self.asm
+    
+
+    def parse(self, vm):
+        ASM = ""
+        for expression in vm:
 
             # Comment asm output with current expression
-            asm.append("// " + expression)
+            ASM += "\n// {}\n".format(expression)
 
             command = expression.split(" ", 1)[0].strip()
             match command:
                 case "push" | "pop":
-                    asm.append(self.pushpop(expression))
+                    ASM += self.pushpop(expression)
 
                 case "label" | "goto" | "if-goto":
-                    asm.append(self.branch(expression))
+                    ASM += self.branch(expression)
                 
                 case "function":
-                    asm.append(self.fnctFunction(expression))
+                    ASM += self.fnctFunction(expression)
                 case "call":
-                    asm.append(self.fnctCall(expression))
+                    ASM += self.fnctCall(expression)
                 case "return":
-                    asm.append(self.fnctReturn())
+                    ASM += self.fnctReturn()
                 
                 case "add":
-                    asm.append(self.mathAdd())
+                    ASM += self.mathAdd()
                 case "sub":
-                    asm.append(self.mathSub())
+                    ASM += self.mathSub()
                 case "neg":
-                    asm.append(self.mathNeg())
+                    ASM += self.mathNeg()
 
                 case "eq":
-                    asm.append(self.mathEQ())
+                    ASM += self.mathEQ()
                 case "gt":
-                    asm.append(self.mathGT())
+                    ASM += self.mathGT()
                 case "lt":
-                    asm.append(self.mathLT())
+                    ASM += self.mathLT()
 
                 case "and":
-                    asm.append(self.logicAnd())
+                    ASM += self.logicAnd()
                 case "or":
-                    asm.append(self.logicOr())
+                    ASM += self.logicOr()
                 case "not":
-                    asm.append(self.logicNot())
+                    ASM += self.logicNot()
 
                 case _:
                     raise SyntaxError("Unknown expression: {}".format(expression))
             
-        return asm
-    
+        return ASM
+        
 
     def pushpop(self, expression):
         command, segment, variable = expression.split(" ")

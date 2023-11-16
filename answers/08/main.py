@@ -1,57 +1,25 @@
 #!/usr/bin/env python3
 
 import sys, os, re
-import vm2asm
+import hackTranslator
 
 def main(pathData, asmPath):
 
     ## Instantiate Translator
-    translate = vm2asm.Translator()
+    translate = hackTranslator.Translator(pathData)
  
-    ## Bootstrap (Set Stack Pointer to 256, call Sys.init)
-    BOOTSTRAP = "//BOOTSTRAP,@256,D=A,@SP,M=D,".replace(",","\n")
-    BOOTSTRAP += translate.parse(["call Sys.init 0"], "BOOTSTRAP")
-    ADDBSTRAP = False
-
-    ASM = ""
-    for pd in pathData:
-        vm = []
-        vmPath = pd["vmPath"]
-        filePre = pd["filePre"]
-        with open(vmPath) as fp:
-            prog = fp.readlines()
-            for line in prog:
-                ## Strip leading and trailing spaces
-                line = line.strip()
-                ## Skip blank lines
-                if line == "":
-                    continue
-                ## Skip comment lines -- lines that begin with //
-                if re.match("^//", line) is not None:
-                    continue
-                ## Remove inline comments
-                line = line.split("//", 1)[0].strip()
-                vm.append(line)
-                if line == "function Sys.init 0":
-                    ADDBSTRAP = True
-
-            ASM += translate.parse(vm, filePre)
-    
-    if ADDBSTRAP:
-        ASM = BOOTSTRAP + ASM
+    ASM = translate.getAssembly()
 
     with open(asmPath, 'w') as asmFile:
         asmFile.write(ASM)
-    print("Done")
-
 
 
 if __name__ == "__main__":
     
     ## Check if file path was supplied
     if len(sys.argv) != 2:
-        print("Usage: vmtranslator.py path/file.vm")
-        print("       vmtranslator.py path")
+        print("Usage: main.py path/file.vm")
+        print("       main.py path")
         exit(0)
 
     vmFilePath = sys.argv[1]
