@@ -1,7 +1,5 @@
 
-import json
-
-class CompliationEngine:
+class CompilationEngine:
     def __init__(self, tokens):
         self.tokens = tokens
         self.tokenPtr = 0

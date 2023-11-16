@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import sys, os, json
-import jackTokenizer, jackCompilationEngine
+import sys, os
+import jackTokenizer, jackCompilationEngine, jackCodeGenerator
 
 def main(pathData):
 
@@ -14,44 +14,12 @@ def main(pathData):
     jackTkizr = jackTokenizer.Tokenizer(jackPath)
     tokens = jackTkizr.getTokens()
 
-    ## Write Tokens to XML T File
-    xml = "<tokens>\n"
-    for token in tokens:
-        tp = token["type"]
-        vl = token["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quote;')
-        xml += "<{}> {} </{}>\n".format(tp, vl, tp)
-    xml += "</tokens>\n"
-    with open(xmlTPath, 'w') as xmlFile:
-        xmlFile.write(xml)
-
-
-    ## Initialize CompliationEngine
-    jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
+    ## Initialize CompilationEngine
+    jackCmpEng = jackCompilationEngine.CompilationEngine(tokens)
     compiled = jackCmpEng.parseTokens()
-    xml = xmled(compiled)
-    with open(xmlPath, 'w') as xmlFile:
-      xmlFile.write(xml)
-    print("done")
 
-def xmled(parseTreeList):
-    tabCount = 0
-    tabSpaces = 2
-    str = ""
-    for i in range(len(parseTreeList)):
-        type = parseTreeList[i]["type"]
-        value = parseTreeList[i]["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
-        if type == "open":
-            str += " "*tabCount
-            str += "<{}>\n".format(value)
-            tabCount += tabSpaces
-        elif type == "close":
-            tabCount -= tabSpaces
-            str += " "*tabCount
-            str += "</{}>\n".format(value)
-        else:
-            str += " "*tabCount
-            str += "<{}> {} </{}>\n".format(type,value,type)
-    return str
+    ## Initialize CodeGenerator
+    jackCdGen = jackCodeGenerator.CodeGenerator(compiled)
 
 if __name__ == "__main__":
     

@@ -25,8 +25,8 @@ def main(pathData):
         xmlFile.write(xml)
 
 
-    ## Initialize CompliationEngine
-    jackCmpEng = jackCompilationEngine.CompliationEngine(tokens)
+    ## Initialize CompilationEngine
+    jackCmpEng = jackCompilationEngine.CompilationEngine(tokens)
     compiled = jackCmpEng.parseTokens()
     xml = xmled(compiled)
     with open(xmlPath, 'w') as xmlFile:
