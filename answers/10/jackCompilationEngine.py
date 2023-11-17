@@ -3,7 +3,6 @@ class CompilationEngine:
     def __init__(self, tokens):
         self.tokens = tokens
         self.tokenPtr = 0
-        self.currentToken = self.tokens[self.tokenPtr]["value"]
         self.parseTree = []
 
     def getNextToken(self, inc=1):

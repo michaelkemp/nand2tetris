@@ -4,10 +4,8 @@ class CompilationEngine:
     def __init__(self, tokens):
         self.tokens = tokens
         self.tokenPtr = 0
-        self.currentToken = self.tokens[self.tokenPtr]["value"]
         self.parseTree = []
 
-        ## name (x , y), type (int, char), kind (field, static), number (0, 1, 2...)
         self.vmcode = []
         self.classSymbolTable = [] 
         self.subroutineSymbolTable = []
@@ -19,11 +17,15 @@ class CompilationEngine:
         self.argumentCnt = 0
         self.localCnt = 0
     
-    def printIt(self):
-        for symbols in self.classSymbolTable:
-            print("{} {} {} {} {}".format(symbols["class"],symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
-        for symbols in self.subroutineSymbolTable:
-            print("   {} {} {} {} {}".format(symbols["subroutine"],symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+    def printClassSymbolTable(self):
+        print("CLASS: {}".format(self.currentClassName))
+        for symbols in sorted(self.classSymbolTable, key=lambda d: d['kind']):
+            print(" {} {} {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+
+    def printSubroutineSymbolTable(self):
+        print("SUBROUTINE: {}".format(self.currentSubroutineName))
+        for symbols in sorted(self.subroutineSymbolTable, key=lambda d: d['kind']):
+            print(" {} {} {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
 
 
     def getNextToken(self, inc=1):
@@ -69,8 +71,10 @@ class CompilationEngine:
     ## class: 'class' className '{' classVarDec* subroutineDec* '}'
     def compileClass(self):
         self.eat("keyword", ["class"])
-
+     
         ## GEN -- CLASS NAME
+        self.classSymbolTable = [] 
+        self.currentClassName = ""
         self.fieldCnt = 0
         self.staticCnt = 0
         type,value = self.seeNextToken()
@@ -89,20 +93,29 @@ class CompilationEngine:
             self.parseTree.append({"type":"close","value":"classVarDec"})
             type,value = self.seeNextToken()
 
+        self.printClassSymbolTable()
+
         # expect subroutineDec*
         # subroutineDec: ('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody
         type,value = self.seeNextToken()    
         while type == "keyword" and value in ["constructor", "function", "method"]:
+
+            ## GEN -- SUBROUTINE NAME
+            self.subroutineSymbolTable = []
+            self.currentSubroutineName = ""
+            self.currentSubroutineType = ""
             self.argumentCnt = 0
             self.localCnt = 0
+            ## GEN -- /SUBROUTINE NAME
+
             self.parseTree.append({"type":"open","value":"subroutineDec"})
             self.compileSubroutineDec()
             self.parseTree.append({"type":"close","value":"subroutineDec"})
             type,value = self.seeNextToken()
 
-        self.eat("symbol", ["}"])
+            self.printSubroutineSymbolTable()
 
-        self.printIt()
+        self.eat("symbol", ["}"])
 
 
     ## classVarDec: ('static'|'field') type varName (',' varName)* ';'
@@ -148,13 +161,11 @@ class CompilationEngine:
         ## GEN -- CLASS SYMBOLTABLE
         for name in classVarNames:
             if classVarKind == "field":
-                i = self.fieldCnt
+                self.classSymbolTable.append({"kind":classVarKind, "type":classVarType, "name":name, "num":self.fieldCnt})
                 self.fieldCnt += 1
             if classVarKind == "static":
-                i = self.staticCnt
+                self.classSymbolTable.append({"kind":classVarKind, "type":classVarType, "name":name, "num":self.staticCnt})
                 self.staticCnt += 1
-                
-            self.classSymbolTable.append({"class":self.currentClassName, "kind":classVarKind, "type":classVarType, "name":name, "num": i})
         ## GEN -- /CLASS SYMBOLTABLE
 
 
@@ -193,7 +204,7 @@ class CompilationEngine:
 
         ## GEN -- SUBROUTINE METHOD
         if self.currentSubroutineType == "method":
-            self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"argument", "type":self.currentClassName, "name":"this", "num": self.argumentCnt})
+            self.subroutineSymbolTable.append({"kind":"argument", "type":self.currentClassName, "name":"this", "num":self.argumentCnt})
             self.argumentCnt += 1
         ## GEN -- SUBROUTINE METHOD
 
@@ -216,7 +227,7 @@ class CompilationEngine:
                 self.eat("identifier")
 
                 ## GEN -- SUBROUTINE ADD ARG
-                self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"argument", "type":subVarType, "name":subVarName, "num": self.argumentCnt})
+                self.subroutineSymbolTable.append({"kind":"argument", "type":subVarType, "name":subVarName, "num":self.argumentCnt})
                 self.argumentCnt += 1
                 ## GEN -- SUBROUTINE ADD ARG
 
@@ -269,7 +280,7 @@ class CompilationEngine:
             self.eat("identifier")
 
             ## GEN -- SUBROUTINE ADD LOCAL
-            self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"local", "type":subVarType, "name":subVarName, "num": self.localCnt})
+            self.subroutineSymbolTable.append({"kind":"local", "type":subVarType, "name":subVarName, "num":self.localCnt})
             self.localCnt += 1
             ## GEN -- SUBROUTINE ADD LOCAL
 
