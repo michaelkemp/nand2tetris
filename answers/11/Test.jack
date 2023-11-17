@@ -1,0 +1,27 @@
+class Test {
+    field int a, b, c;
+    static char d, e, f;
+    field boolean yes, no;
+    static int s1, d1, l1;
+
+    constructor Test new(int xa, int xb, int xc) {
+        var boolean test1, testa, thingmy;
+        var char test2;
+        var Test test3;
+        let a = xa;
+        let b = xb;
+        let c = xc;
+    }
+
+    method void myMeth1(char a, boolean b, int i) {
+        var boolean exit;
+        let exit = b;
+    }
+
+    function int double(int a) {
+        return a * 2;
+
+    }
+
+
+}

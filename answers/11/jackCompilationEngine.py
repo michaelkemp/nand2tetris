@@ -1,3 +1,4 @@
+import json
 
 class CompilationEngine:
     def __init__(self, tokens):
@@ -5,6 +6,25 @@ class CompilationEngine:
         self.tokenPtr = 0
         self.currentToken = self.tokens[self.tokenPtr]["value"]
         self.parseTree = []
+
+        ## name (x , y), type (int, char), kind (field, static), number (0, 1, 2...)
+        self.vmcode = []
+        self.classSymbolTable = [] 
+        self.subroutineSymbolTable = []
+        self.currentClassName = ""
+        self.currentSubroutineName = ""
+        self.currentSubroutineType = ""
+        self.fieldCnt = 0
+        self.staticCnt = 0
+        self.argumentCnt = 0
+        self.localCnt = 0
+    
+    def printIt(self):
+        for symbols in self.classSymbolTable:
+            print("{} {} {} {} {}".format(symbols["class"],symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+        for symbols in self.subroutineSymbolTable:
+            print("   {} {} {} {} {}".format(symbols["subroutine"],symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+
 
     def getNextToken(self, inc=1):
         if self.tokenPtr < len(self.tokens):
@@ -49,6 +69,14 @@ class CompilationEngine:
     ## class: 'class' className '{' classVarDec* subroutineDec* '}'
     def compileClass(self):
         self.eat("keyword", ["class"])
+
+        ## GEN -- CLASS NAME
+        self.fieldCnt = 0
+        self.staticCnt = 0
+        type,value = self.seeNextToken()
+        self.currentClassName = value
+        ## GEN -- /CLASS NAME
+
         self.eat("identifier")
         self.eat("symbol", ["{"])
 
@@ -65,6 +93,8 @@ class CompilationEngine:
         # subroutineDec: ('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody
         type,value = self.seeNextToken()    
         while type == "keyword" and value in ["constructor", "function", "method"]:
+            self.argumentCnt = 0
+            self.localCnt = 0
             self.parseTree.append({"type":"open","value":"subroutineDec"})
             self.compileSubroutineDec()
             self.parseTree.append({"type":"close","value":"subroutineDec"})
@@ -72,27 +102,79 @@ class CompilationEngine:
 
         self.eat("symbol", ["}"])
 
+        self.printIt()
+
 
     ## classVarDec: ('static'|'field') type varName (',' varName)* ';'
     def compileClassVarDec(self):
+
+        ## GEN -- CLASS VAR KIND
+        type,value = self.seeNextToken()
+        classVarKind = value
+        ## GEN -- /CLASS VAR KIND
+
         self.eat("keyword",["static","field"])
+
+        ## GEN -- CLASS VAR TYPE
+        type,value = self.seeNextToken()
+        classVarType = value
+        ## GEN -- /CLASS VAR TYPE
+
         self.eatType()
+
+        ## GEN -- CLASS VAR NAME
+        classVarNames = []
+        type,value = self.seeNextToken()
+        classVarNames.append(value)
+        ## GEN -- /CLASS VAR NAME
+
         self.eat("identifier")
 
         # (',' varName)*
         type,value = self.seeNextToken()
         while (type == "symbol" and value == ","):
             self.eat("symbol", [","])
+
+            ## GEN -- CLASS VAR NAME
+            type,value = self.seeNextToken()
+            classVarNames.append(value)
+            ## GEN -- /CLASS VAR NAME
+
             self.eat("identifier")
             type,value = self.seeNextToken()
 
         self.eat("symbol", [";"])
 
+        ## GEN -- CLASS SYMBOLTABLE
+        for name in classVarNames:
+            if classVarKind == "field":
+                i = self.fieldCnt
+                self.fieldCnt += 1
+            if classVarKind == "static":
+                i = self.staticCnt
+                self.staticCnt += 1
+                
+            self.classSymbolTable.append({"class":self.currentClassName, "kind":classVarKind, "type":classVarType, "name":name, "num": i})
+        ## GEN -- /CLASS SYMBOLTABLE
+
+
 
     ## subroutineDec: ('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody
     def compileSubroutineDec(self):
+
+        ## GEN -- SUBROUTINE TYPE
+        type,value = self.seeNextToken()
+        self.currentSubroutineType = value
+        ## GEN -- /SUBROUTINE TYPE
+
         self.eat("keyword",["constructor","function","method"])
         self.eatType(True) ## include Void in Type
+
+        ## GEN -- SUBROUTINE NAME
+        type,value = self.seeNextToken()
+        self.currentSubroutineName = value
+        ## GEN -- /SUBROUTINE NAME
+
         self.eat("identifier")
 
         self.eat("symbol", ["("])
@@ -108,11 +190,35 @@ class CompilationEngine:
 
     ## parameterList: ((type varName) (',' type varName)*)?
     def compileParameterList(self):
+
+        ## GEN -- SUBROUTINE METHOD
+        if self.currentSubroutineType == "method":
+            self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"argument", "type":self.currentClassName, "name":"this", "num": self.argumentCnt})
+            self.argumentCnt += 1
+        ## GEN -- SUBROUTINE METHOD
+
         type,value = self.seeNextToken()
         if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
             while True:
+
+                ## GEN -- SUBROUTINE ARG TYPE
+                type,value = self.seeNextToken()
+                subVarType = value
+                ## GEN -- /SUBROUTINE ARG TYPE
+
                 self.eatType()
+
+                ## GEN -- SUBROUTINE ARG NAME
+                type,value = self.seeNextToken()
+                subVarName = value
+                ## GEN -- /SUBROUTINE ARG NAME
+ 
                 self.eat("identifier")
+
+                ## GEN -- SUBROUTINE ADD ARG
+                self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"argument", "type":subVarType, "name":subVarName, "num": self.argumentCnt})
+                self.argumentCnt += 1
+                ## GEN -- SUBROUTINE ADD ARG
 
                 # (',' type varName)*
                 type,value = self.seeNextToken()
@@ -120,6 +226,8 @@ class CompilationEngine:
                     self.eat("symbol", [","])
                 else:
                     break
+
+
 
     ## subroutineBody: '{' varDec* statements '}'
     def compileSubroutineBody(self):
@@ -143,10 +251,27 @@ class CompilationEngine:
     ## varDec: 'var' type varName (',' varName)* ';'
     def compileVarDec(self):
         self.eat("keyword", ["var"])
+
+        ## GEN -- SUBROUTINE LOCAL TYPE
+        type,value = self.seeNextToken()
+        subVarType = value
+        ## GEN -- /SUBROUTINE LOCAL TYPE
+
         self.eatType()
 
         while True:
+
+            ## GEN -- SUBROUTINE LOCAL NAME
+            type,value = self.seeNextToken()
+            subVarName = value
+            ## GEN -- /SUBROUTINE LOCAL NAME
+
             self.eat("identifier")
+
+            ## GEN -- SUBROUTINE ADD LOCAL
+            self.subroutineSymbolTable.append({"subroutine":self.currentSubroutineName, "kind":"local", "type":subVarType, "name":subVarName, "num": self.localCnt})
+            self.localCnt += 1
+            ## GEN -- SUBROUTINE ADD LOCAL
 
             # (',' varName)*
             type,value = self.seeNextToken()
@@ -156,7 +281,6 @@ class CompilationEngine:
                 break
         
         self.eat("symbol", [";"])
-
 
 
     ## statements: statement*
