@@ -16,10 +16,11 @@ class Test {
     method void myMeth1(char a, boolean b, int i) {
         var boolean exit;
         let exit = b;
+        return 7;
     }
 
     function int double(int a) {
-        return a * 2;
+        return -a * 2 + 11 / (4 - 5) * myMeth1("a", true, 3);
 
     }
 
