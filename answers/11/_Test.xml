@@ -88,6 +88,21 @@
           <expression>
             <term>
               <identifier> xa </identifier>
+              <symbol> [ </symbol>
+              <expression>
+                <term>
+                  <integerConstant> 5 </integerConstant>
+                </term>
+                <symbol> + </symbol>
+                <term>
+                  <identifier> i </identifier>
+                </term>
+              </expression>
+              <symbol> ] </symbol>
+            </term>
+            <symbol> * </symbol>
+            <term>
+              <integerConstant> 5 </integerConstant>
             </term>
           </expression>
           <symbol> ; </symbol>
@@ -98,7 +113,57 @@
           <symbol> = </symbol>
           <expression>
             <term>
-              <identifier> xb </identifier>
+              <symbol> ( </symbol>
+              <expression>
+                <term>
+                  <identifier> xb </identifier>
+                </term>
+                <symbol> + </symbol>
+                <term>
+                  <integerConstant> 4 </integerConstant>
+                </term>
+              </expression>
+              <symbol> ) </symbol>
+            </term>
+            <symbol> * </symbol>
+            <term>
+              <integerConstant> 9 </integerConstant>
+            </term>
+            <symbol> + </symbol>
+            <term>
+              <identifier> myMeth1 </identifier>
+              <symbol> ( </symbol>
+              <expressionList>
+                <expression>
+                  <term>
+                    <stringConstant> w </stringConstant>
+                  </term>
+                </expression>
+                <symbol> , </symbol>
+                <expression>
+                  <term>
+                    <keyword> false </keyword>
+                  </term>
+                </expression>
+                <symbol> , </symbol>
+                <expression>
+                  <term>
+                    <integerConstant> 3 </integerConstant>
+                  </term>
+                  <symbol> * </symbol>
+                  <term>
+                    <integerConstant> 4 </integerConstant>
+                  </term>
+                  <symbol> + </symbol>
+                  <term>
+                    <symbol> - </symbol>
+                    <term>
+                      <integerConstant> 6 </integerConstant>
+                    </term>
+                  </term>
+                </expression>
+              </expressionList>
+              <symbol> ) </symbol>
             </term>
           </expression>
           <symbol> ; </symbol>
@@ -108,6 +173,10 @@
           <identifier> c </identifier>
           <symbol> = </symbol>
           <expression>
+            <term>
+              <integerConstant> 11 </integerConstant>
+            </term>
+            <symbol> / </symbol>
             <term>
               <identifier> xc </identifier>
             </term>
@@ -151,6 +220,24 @@
             <term>
               <identifier> b </identifier>
             </term>
+            <symbol> + </symbol>
+            <term>
+              <integerConstant> 5 </integerConstant>
+            </term>
+            <symbol> / </symbol>
+            <term>
+              <symbol> ( </symbol>
+              <expression>
+                <term>
+                  <integerConstant> 7 </integerConstant>
+                </term>
+                <symbol> * </symbol>
+                <term>
+                  <integerConstant> 3 </integerConstant>
+                </term>
+              </expression>
+              <symbol> ) </symbol>
+            </term>
           </expression>
           <symbol> ; </symbol>
         </letStatement>
@@ -179,7 +266,65 @@
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
+      <varDec>
+        <keyword> var </keyword>
+        <keyword> int </keyword>
+        <identifier> thingy </identifier>
+        <symbol> ; </symbol>
+      </varDec>
       <statements>
+        <letStatement>
+          <keyword> let </keyword>
+          <identifier> thingy </identifier>
+          <symbol> = </symbol>
+          <expression>
+            <term>
+              <identifier> Test </identifier>
+              <symbol> . </symbol>
+              <identifier> myMeth1 </identifier>
+              <symbol> ( </symbol>
+              <expressionList>
+                <expression>
+                  <term>
+                    <stringConstant> l </stringConstant>
+                  </term>
+                </expression>
+                <symbol> , </symbol>
+                <expression>
+                  <term>
+                    <keyword> false </keyword>
+                  </term>
+                </expression>
+                <symbol> , </symbol>
+                <expression>
+                  <term>
+                    <integerConstant> 9 </integerConstant>
+                  </term>
+                  <symbol> * </symbol>
+                  <term>
+                    <symbol> - </symbol>
+                    <term>
+                      <integerConstant> 3 </integerConstant>
+                    </term>
+                  </term>
+                  <symbol> * </symbol>
+                  <term>
+                    <integerConstant> 4 </integerConstant>
+                  </term>
+                  <symbol> + </symbol>
+                  <term>
+                    <symbol> - </symbol>
+                    <term>
+                      <integerConstant> 6 </integerConstant>
+                    </term>
+                  </term>
+                </expression>
+              </expressionList>
+              <symbol> ) </symbol>
+            </term>
+          </expression>
+          <symbol> ; </symbol>
+        </letStatement>
         <returnStatement>
           <keyword> return </keyword>
           <expression>
@@ -192,24 +337,6 @@
             <symbol> * </symbol>
             <term>
               <integerConstant> 2 </integerConstant>
-            </term>
-            <symbol> + </symbol>
-            <term>
-              <integerConstant> 11 </integerConstant>
-            </term>
-            <symbol> / </symbol>
-            <term>
-              <symbol> ( </symbol>
-              <expression>
-                <term>
-                  <integerConstant> 4 </integerConstant>
-                </term>
-                <symbol> - </symbol>
-                <term>
-                  <integerConstant> 5 </integerConstant>
-                </term>
-              </expression>
-              <symbol> ) </symbol>
             </term>
             <symbol> * </symbol>
             <term>
@@ -230,10 +357,28 @@
                 <symbol> , </symbol>
                 <expression>
                   <term>
-                    <integerConstant> 3 </integerConstant>
+                    <identifier> thingy </identifier>
                   </term>
                 </expression>
               </expressionList>
+              <symbol> ) </symbol>
+            </term>
+            <symbol> + </symbol>
+            <term>
+              <integerConstant> 11 </integerConstant>
+            </term>
+            <symbol> / </symbol>
+            <term>
+              <symbol> ( </symbol>
+              <expression>
+                <term>
+                  <integerConstant> 4 </integerConstant>
+                </term>
+                <symbol> - </symbol>
+                <term>
+                  <integerConstant> 5 </integerConstant>
+                </term>
+              </expression>
               <symbol> ) </symbol>
             </term>
           </expression>

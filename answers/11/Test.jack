@@ -8,19 +8,27 @@ class Test {
         var boolean test1, testa, thingmy;
         var char test2;
         var Test test3;
-        let a = xa;
-        let b = xb;
-        let c = xc;
+        let a = xa[5+i] * 5;
+        let b = (xb + 4) * 9 +  myMeth1("w", false, 3 * 4 + -6);
+        let c = 11/xc;
     }
 
     method void myMeth1(char a, boolean b, int i) {
         var boolean exit;
-        let exit = b;
+        let exit = b + 5 / (7*3);
         return 7;
     }
 
+    function int triple(int a) {
+        return a * 3;
+
+    }
+
     function int double(int a) {
-        return -a * 2 + 11 / (4 - 5) * myMeth1("a", true, 3);
+        var int thingy;
+        let thingy = Test.myMeth1("l", false, 9 * -3 * 4 + -6 * triple(7 * 6));
+
+        return -a * 2 * myMeth1("a", true, thingy) + 11 / (4 - 5);
 
     }
 
