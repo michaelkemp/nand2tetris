@@ -18,6 +18,7 @@ class CompilationEngine:
         self.localCnt = 0
 
         self.expression = {}
+        self.expCount = 0
     
     def printClassSymbolTable(self):
         print("CLASS: {}".format(self.currentClassName))
@@ -361,9 +362,10 @@ class CompilationEngine:
 
             ## GEN -- EXPRESSION
             self.expression = {}
+            self.expCount = 0
             ## GEN -- /EXPRESSION
 
-            self.compileExpression("_let[]")
+            self.compileExpression("let")
 
             ## GEN -- EXPRESSION
             print(self.expression)
@@ -378,9 +380,10 @@ class CompilationEngine:
 
         ## GEN -- EXPRESSION
         self.expression = {}
+        self.expCount = 0
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("_let")
+        self.compileExpression("let")
 
         ## GEN -- EXPRESSION
         print(self.expression)
@@ -399,9 +402,10 @@ class CompilationEngine:
 
         ## GEN -- EXPRESSION
         self.expression = {}
+        self.expCount = 0
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("_if")
+        self.compileExpression("if")
 
         ## GEN -- EXPRESSION
         print(self.expression)
@@ -437,9 +441,10 @@ class CompilationEngine:
 
         ## GEN -- EXPRESSION
         self.expression = {}
+        self.expCount = 0
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("_while")
+        self.compileExpression("while")
 
         ## GEN -- EXPRESSION
         print(self.expression)
@@ -476,9 +481,10 @@ class CompilationEngine:
 
             ## GEN -- EXPRESSION
             self.expression = {}
+            self.expCount = 0
             ## GEN -- /EXPRESSION
 
-            self.compileExpression("_do")
+            self.compileExpression("do")
 
             ## GEN -- EXPRESSION
             print(self.expression)
@@ -491,14 +497,18 @@ class CompilationEngine:
     ## term: integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOP term
     def compileTerm(self,parent):
         type,value = self.seeNextToken()
+
+        ## GEN -- TERM
+        if parent not in self.expression:
+            self.expression[parent] = []
+        ## GEN -- TERM
+
         match type:
 
             # integerConstant | stringConstant
             case "integerConstant" | "stringConstant":
                 ## GEN -- TERM
                 ty,va = self.seeNextToken()
-                if parent not in self.expression:
-                    self.expression[parent] = []
                 self.expression[parent].append(va)
                 ## GEN -- /TERM
 
@@ -508,8 +518,6 @@ class CompilationEngine:
             case "keyword":
                 ## GEN -- TERM
                 ty,va = self.seeNextToken()
-                if parent not in self.expression:
-                    self.expression[parent] = []
                 self.expression[parent].append(va)
                 ## GEN -- /TERM
 
@@ -521,8 +529,6 @@ class CompilationEngine:
                     case "(":
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        if parent not in self.expression:
-                            self.expression[parent] = []
                         self.expression[parent].append(va)
                         ## GEN -- /TERM
 
@@ -534,8 +540,6 @@ class CompilationEngine:
  
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        if parent not in self.expression:
-                            self.expression[parent] = []
                         self.expression[parent].append(va)
                         ## GEN -- /TERM
 
@@ -544,8 +548,6 @@ class CompilationEngine:
                     case "-" | "~":
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        if parent not in self.expression:
-                            self.expression[parent] = []
                         self.expression[parent].append(va)
                         ## GEN -- /TERM
 
@@ -560,10 +562,10 @@ class CompilationEngine:
                 ## GEN -- TERM
                 if self.seeSubroutineCall():
                     va = self.seeSubroutineCall()
+                    va = "{}[{}]".format(va, self.expCount)
                 else:
                     ty,va = self.seeNextToken()
-                if parent not in self.expression:
-                    self.expression[parent] = []
+
                 self.expression[parent].append(va)
                 ## GEN -- /TERM
 
@@ -576,13 +578,15 @@ class CompilationEngine:
 
                         self.eat("symbol",["["])
                         self.parseTree.append({"type":"open","value":"expression"})
-                        self.compileExpression("_{}[]".format(va))
+                        self.compileExpression(va)
+                        self.expCount += 1
                         self.parseTree.append({"type":"close","value":"expression"})
                         self.eat("symbol",["]"])
 
                     # subroutineCall    
                     case "(" | ".":
                         self.compileSubroutineCall(False, va)
+                        self.expCount += 1
 
 
     ## expression: term (op term)*
@@ -655,6 +659,6 @@ class CompilationEngine:
         # '(' expressionList ')'
         self.eat("symbol",["("])    
         self.parseTree.append({"type":"open","value":"expressionList"})
-        self.compileExpressionList("_{}".format(fullName))
+        self.compileExpressionList("{}".format(fullName))
         self.parseTree.append({"type":"close","value":"expressionList"})
         self.eat("symbol",[")"])    

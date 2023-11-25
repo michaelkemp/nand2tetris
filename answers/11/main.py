@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, os
-import jackTokenizer, jackCompilationEngine, jackCodeGenerator
+import jackTokenizer, jackCompilationEngine
 
 def main(pathData):
 
@@ -18,8 +18,6 @@ def main(pathData):
         jackCmpEng = jackCompilationEngine.CompilationEngine(tokens)
         parseTree = jackCmpEng.parseTokens()
 
-        ## Initialize CodeGenerator
-        jackCdGen = jackCodeGenerator.CodeGenerator(parseTree)
 
 if __name__ == "__main__":
     

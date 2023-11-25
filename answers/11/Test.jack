@@ -22,7 +22,7 @@ class Test {
 
     method int double(int a) {
         var int thingy;
-        let thingy = myMeth1("l", false, 9 * -3 * 4 + -6 * Test.triple(7 * 6));
+        let thingy = myMeth1("l", false, 9 * -3 * Test.triple(4) + -6 * Test.triple(7 * 6));
 
         return -a * 2 * myMeth1("a", true, thingy) + 11 / (4 - 5);
 
