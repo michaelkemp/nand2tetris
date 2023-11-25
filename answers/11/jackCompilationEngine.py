@@ -1,4 +1,4 @@
-import json
+import jackExpressions, json
 
 class CompilationEngine:
     def __init__(self, tokens):
@@ -17,9 +17,7 @@ class CompilationEngine:
         self.argumentCnt = 0
         self.localCnt = 0
 
-        self.expression = {}
-        self.expCount = 0
-    
+
     def printClassSymbolTable(self):
         print("CLASS: {}".format(self.currentClassName))
         for symbols in sorted(self.classSymbolTable, key=lambda d: d['kind']):
@@ -74,24 +72,24 @@ class CompilationEngine:
 
 
     def eat(self, expType, expValues=None):
-        type,value = self.getNextToken()
-        if (type == expType and expValues is None) or (type == expType and value in expValues):
-            self.parseTree.append({"type":type,"value":value})
+        TYPE, VALUE = self.getNextToken()
+        if (TYPE == expType and expValues is None) or (TYPE == expType and VALUE in expValues):
+            self.parseTree.append({"type":TYPE,"value":VALUE})
         else:
             print("----",self.parseTree,"-----")
-            raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), type, value))
+            raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), TYPE, VALUE))
 
 
-    ## type: 'int'|'char'|'boolean'|className
+    ## TYPE: 'int'|'char'|'boolean'|className
     def eatType(self, incVoid=False):
         expValues = ["int","char","boolean"]
         if incVoid:
             expValues.append("void")
-        type,value = self.getNextToken()
-        if (type == "keyword" and value in expValues) or (type == "identifier"):
-            self.parseTree.append({"type":type,"value":value})
+        TYPE, VALUE = self.getNextToken()
+        if (TYPE == "keyword" and VALUE in expValues) or (TYPE == "identifier"):
+            self.parseTree.append({"type":TYPE,"value":VALUE})
         else:
-            raise SyntaxError("Type Error [{} {}]".format(type,value))
+            raise SyntaxError("Type Error [{} {}]".format(TYPE, VALUE))
         
         
     ## class: 'class' className '{' classVarDec* subroutineDec* '}'
@@ -111,20 +109,20 @@ class CompilationEngine:
         self.eat("symbol", ["{"])
 
         # expect classVarDec*
-        # classVarDec: ('static'|'field') type varName (',' varName)* ';'
-        type,value = self.seeNextToken()
-        while type == "keyword" and value in["static", "field"]:
+        # classVarDec: ('static'|'field') TYPE varName (',' varName)* ';'
+        TYPE, VALUE = self.seeNextToken()
+        while TYPE == "keyword" and VALUE in["static", "field"]:
             self.parseTree.append({"type":"open","value":"classVarDec"})
             self.compileClassVarDec()
             self.parseTree.append({"type":"close","value":"classVarDec"})
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
 
         self.printClassSymbolTable()
 
         # expect subroutineDec*
-        # subroutineDec: ('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody
-        type,value = self.seeNextToken()    
-        while type == "keyword" and value in ["constructor", "function", "method"]:
+        # subroutineDec: ('constructor'|'function'|'method') ('void'|TYPE) subroutineName '(' parameterList ')' subroutineBody
+        TYPE, VALUE = self.seeNextToken()    
+        while TYPE == "keyword" and VALUE in ["constructor", "function", "method"]:
 
             ## GEN -- SUBROUTINE NAME
             self.subroutineSymbolTable = []
@@ -137,14 +135,14 @@ class CompilationEngine:
             self.parseTree.append({"type":"open","value":"subroutineDec"})
             self.compileSubroutineDec()
             self.parseTree.append({"type":"close","value":"subroutineDec"})
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
 
             self.printSubroutineSymbolTable()
 
         self.eat("symbol", ["}"])
 
 
-    ## classVarDec: ('static'|'field') type varName (',' varName)* ';'
+    ## classVarDec: ('static'|'field') TYPE varName (',' varName)* ';'
     def compileClassVarDec(self):
 
         ## GEN -- CLASS VAR KIND
@@ -170,8 +168,8 @@ class CompilationEngine:
         self.eat("identifier")
 
         # (',' varName)*
-        type,value = self.seeNextToken()
-        while (type == "symbol" and value == ","):
+        TYPE, VALUE = self.seeNextToken()
+        while (TYPE == "symbol" and VALUE == ","):
             self.eat("symbol", [","])
 
             ## GEN -- CLASS VAR NAME
@@ -180,7 +178,7 @@ class CompilationEngine:
             ## GEN -- /CLASS VAR NAME
 
             self.eat("identifier")
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
 
         self.eat("symbol", [";"])
 
@@ -196,7 +194,7 @@ class CompilationEngine:
 
 
 
-    ## subroutineDec: ('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody
+    ## subroutineDec: ('constructor'|'function'|'method') ('void'|TYPE) subroutineName '(' parameterList ')' subroutineBody
     def compileSubroutineDec(self):
 
         ## GEN -- SUBROUTINE TYPE
@@ -225,7 +223,7 @@ class CompilationEngine:
         self.parseTree.append({"type":"close","value":"subroutineBody"})
 
 
-    ## parameterList: ((type varName) (',' type varName)*)?
+    ## parameterList: ((TYPE varName) (',' TYPE varName)*)?
     def compileParameterList(self):
 
         ## GEN -- SUBROUTINE METHOD
@@ -234,8 +232,8 @@ class CompilationEngine:
             self.argumentCnt += 1
         ## GEN -- SUBROUTINE METHOD
 
-        type,value = self.seeNextToken()
-        if (type == "keyword" and (value == "int" or value == "char" or value == "boolean")) or (type == "identifier"):
+        TYPE, VALUE = self.seeNextToken()
+        if (TYPE == "keyword" and (VALUE == "int" or VALUE == "char" or VALUE == "boolean")) or (TYPE == "identifier"):
             while True:
 
                 ## GEN -- SUBROUTINE ARG TYPE
@@ -257,9 +255,9 @@ class CompilationEngine:
                 self.argumentCnt += 1
                 ## GEN -- SUBROUTINE ADD ARG
 
-                # (',' type varName)*
-                type,value = self.seeNextToken()
-                if type == "symbol" and value == ",":
+                # (',' TYPE varName)*
+                TYPE, VALUE = self.seeNextToken()
+                if TYPE == "symbol" and VALUE == ",":
                     self.eat("symbol", [","])
                 else:
                     break
@@ -271,13 +269,13 @@ class CompilationEngine:
         self.eat("symbol", ["{"])
 
         # varDec*
-        # varDec: 'var' type varName (',' varName)* ';'
-        type,value = self.seeNextToken()
-        while type == "keyword" and value == "var":
+        # varDec: 'var' TYPE varName (',' varName)* ';'
+        TYPE, VALUE = self.seeNextToken()
+        while TYPE == "keyword" and VALUE == "var":
             self.parseTree.append({"type":"open","value":"varDec"})
             self.compileVarDec()
             self.parseTree.append({"type":"close","value":"varDec"})
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
 
         self.parseTree.append({"type":"open","value":"statements"})
         self.compileStatements()
@@ -285,7 +283,7 @@ class CompilationEngine:
         self.eat("symbol", ["}"])
 
 
-    ## varDec: 'var' type varName (',' varName)* ';'
+    ## varDec: 'var' TYPE varName (',' varName)* ';'
     def compileVarDec(self):
         self.eat("keyword", ["var"])
 
@@ -311,8 +309,8 @@ class CompilationEngine:
             ## GEN -- /SUBROUTINE ADD LOCAL
 
             # (',' varName)*
-            type,value = self.seeNextToken()
-            if type == "symbol" and value == ",":
+            TYPE, VALUE = self.seeNextToken()
+            if TYPE == "symbol" and VALUE == ",":
                 self.eat("symbol", [","])
             else:
                 break
@@ -323,9 +321,9 @@ class CompilationEngine:
     ## statements: statement*
     ## statement:  letStatement | ifStatement | whileStatement | doStatement | returnStatement
     def compileStatements(self):
-        type,value = self.seeNextToken()
-        while type == "keyword" and value in ["let","if","while","do","return"]:
-            match value:
+        TYPE, VALUE = self.seeNextToken()
+        while TYPE == "keyword" and VALUE in ["let","if","while","do","return"]:
+            match VALUE:
                 case "let":
                     self.parseTree.append({"type":"open","value":"letStatement"})
                     self.compileLet()
@@ -346,7 +344,7 @@ class CompilationEngine:
                     self.parseTree.append({"type":"open","value":"returnStatement"})
                     self.compileReturn()
                     self.parseTree.append({"type":"close","value":"returnStatement"})
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
 
 
     ## letStatement: 'let' varName ('[' expression ']')? '=' expression ';'
@@ -355,20 +353,19 @@ class CompilationEngine:
         self.eat("identifier")
 
         # ('[' expression ']')?
-        type,value = self.seeNextToken()
-        if type == "symbol" and value == "[":
+        TYPE, VALUE = self.seeNextToken()
+        if TYPE == "symbol" and VALUE == "[":
             self.eat("symbol",["["])
             self.parseTree.append({"type":"open","value":"expression"})
 
             ## GEN -- EXPRESSION
-            self.expression = {}
-            self.expCount = 0
+            letExpression = jackExpressions.Expressions()
             ## GEN -- /EXPRESSION
 
-            self.compileExpression("let")
+            self.compileExpression(letExpression)
 
             ## GEN -- EXPRESSION
-            print(self.expression)
+            letExpression.printExpression()
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -379,14 +376,13 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        self.expression = {}
-        self.expCount = 0
+        letExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("let")
+        self.compileExpression(letExpression)
 
         ## GEN -- EXPRESSION
-        print(self.expression)
+        letExpression.printExpression()
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -401,14 +397,13 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        self.expression = {}
-        self.expCount = 0
+        ifExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("if")
+        self.compileExpression(ifExpression)
 
         ## GEN -- EXPRESSION
-        print(self.expression)
+        ifExpression.printExpression()
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -421,8 +416,8 @@ class CompilationEngine:
         self.eat("symbol",["}"])
 
         # ('else' '{' statements '}')?
-        type,value = self.seeNextToken()
-        if type == "keyword" and value == "else":
+        TYPE, VALUE = self.seeNextToken()
+        if TYPE == "keyword" and VALUE == "else":
             self.eat("keyword",["else"])
             self.eat("symbol",["{"])
             self.parseTree.append({"type":"open","value":"statements"})
@@ -440,14 +435,13 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        self.expression = {}
-        self.expCount = 0
+        whileExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression("while")
+        self.compileExpression(whileExpression)
 
         ## GEN -- EXPRESSION
-        print(self.expression)
+        whileExpression.printExpression()
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -462,9 +456,17 @@ class CompilationEngine:
 
     ## doStatement: 'do' subroutineCall ';'
     def compileDo(self):
+        ## GEN -- EXPRESSION
+        doExpression = jackExpressions.Expressions()
+        ## GEN -- /EXPRESSION
+
         self.eat("keyword",["do"])
-        self.compileSubroutineCall()
+        self.compileSubroutineCall(True, doExpression)
         self.eat("symbol",[";"])
+
+        ## GEN -- EXPRESSION
+        doExpression.printExpression()
+        ## GEN -- /EXPRESSION
 
 
     ## returnStatement: 'return' expression? ';'
@@ -472,22 +474,21 @@ class CompilationEngine:
         self.eat("keyword",["return"])
 
         # ;
-        type,value = self.seeNextToken()
-        if type == "symbol" and value == ";":
+        TYPE, VALUE = self.seeNextToken()
+        if TYPE == "symbol" and VALUE == ";":
             self.eat("symbol",[";"])
         # expression?    
         else:
             self.parseTree.append({"type":"open","value":"expression"})
 
             ## GEN -- EXPRESSION
-            self.expression = {}
-            self.expCount = 0
+            returnExpression = jackExpressions.Expressions()
             ## GEN -- /EXPRESSION
 
-            self.compileExpression("do")
+            self.compileExpression(returnExpression)
 
             ## GEN -- EXPRESSION
-            print(self.expression)
+            returnExpression.printExpression()
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -495,41 +496,37 @@ class CompilationEngine:
 
 
     ## term: integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOP term
-    def compileTerm(self,parent):
-        type,value = self.seeNextToken()
+    def compileTerm(self, parent):
+        print("==================",type(parent))
+        TYPE, VALUE = self.seeNextToken()
 
-        ## GEN -- TERM
-        if parent not in self.expression:
-            self.expression[parent] = []
-        ## GEN -- TERM
-
-        match type:
+        match TYPE:
 
             # integerConstant | stringConstant
             case "integerConstant" | "stringConstant":
                 ## GEN -- TERM
                 ty,va = self.seeNextToken()
-                self.expression[parent].append(va)
+                parent.addTerm(va,"constant")
                 ## GEN -- /TERM
 
-                self.eat(type)
+                self.eat(TYPE)
 
             # keywordConstant
             case "keyword":
                 ## GEN -- TERM
                 ty,va = self.seeNextToken()
-                self.expression[parent].append(va)
+                parent.addTerm(va,"keyword")
                 ## GEN -- /TERM
 
                 self.eat("keyword", ['true','false','null','this'])
 
             case "symbol":
-                match value:
+                match VALUE:
                     # '(' expression ')'    
                     case "(":
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        self.expression[parent].append(va)
+                        parent.addTerm(va,"symbol")
                         ## GEN -- /TERM
 
                         self.eat("symbol",["("])
@@ -540,18 +537,19 @@ class CompilationEngine:
  
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        self.expression[parent].append(va)
+                        parent.addTerm(va,"symbol")
                         ## GEN -- /TERM
 
                         self.eat("symbol",[")"])
+
                     # unaryOP term        
                     case "-" | "~":
                         ## GEN -- TERM
                         ty,va = self.seeNextToken()
-                        self.expression[parent].append(va)
+                        parent.addTerm(va,"unary")
                         ## GEN -- /TERM
 
-                        self.eat("symbol",[value])
+                        self.eat("symbol",[VALUE])
                         self.parseTree.append({"type":"open","value":"term"})
                         self.compileTerm(parent)
                         self.parseTree.append({"type":"close","value":"term"})
@@ -562,31 +560,29 @@ class CompilationEngine:
                 ## GEN -- TERM
                 if self.seeSubroutineCall():
                     va = self.seeSubroutineCall()
-                    va = "{}[{}]".format(va, self.expCount)
+                    tmp = jackExpressions.Expressions()
+                    parent.addTerm(va,"call", tmp)
                 else:
                     ty,va = self.seeNextToken()
-
-                self.expression[parent].append(va)
+                    parent.addTerm(va,"var")
                 ## GEN -- /TERM
 
                 self.eat("identifier")
 
-                type,value = self.seeNextToken()
-                match value:
+                TYPE, VALUE = self.seeNextToken()
+                match VALUE:
                     # '[' expression ']'
                     case "[":
 
                         self.eat("symbol",["["])
                         self.parseTree.append({"type":"open","value":"expression"})
-                        self.compileExpression(va)
-                        self.expCount += 1
+                        self.compileExpression(parent)
                         self.parseTree.append({"type":"close","value":"expression"})
                         self.eat("symbol",["]"])
 
                     # subroutineCall    
                     case "(" | ".":
-                        self.compileSubroutineCall(False, va)
-                        self.expCount += 1
+                        self.compileSubroutineCall(False, tmp)
 
 
     ## expression: term (op term)*
@@ -597,68 +593,63 @@ class CompilationEngine:
         self.parseTree.append({"type":"close","value":"term"})
 
         # (op term)*
-        type,value = self.seeNextToken()
-        while type == "symbol" and value in ["+","-","*","/","&","|","<",">","="]:
+        TYPE, VALUE = self.seeNextToken()
+        while TYPE == "symbol" and VALUE in ["+","-","*","/","&","|","<",">","="]:
 
             ## GEN -- TERM
             ty,va = self.seeNextToken()
-            self.expression[parent].append(va)
+            parent.addTerm(va,"symbol")
             ## GEN -- /TERM
 
-            self.eat("symbol",[value])
+            self.eat("symbol",[VALUE])
 
             self.parseTree.append({"type":"open","value":"term"})
             self.compileTerm(parent)
             self.parseTree.append({"type":"close","value":"term"})
-            type,value = self.seeNextToken()
+            TYPE, VALUE = self.seeNextToken()
  
 
     ## expressionList: (expression (',' expression)* )?
     def compileExpressionList(self, parent):
 
-        count = 0
-        type,value = self.seeNextToken()
-        if (type in ["integerConstant","stringConstant","identifier"]) or (type=="keyword" and value in ['true','false','null','this']) or (type == "symbol" and value in ["(","-","~"]):
+        expList = []
+        TYPE, VALUE = self.seeNextToken()
+        if (TYPE in ["integerConstant","stringConstant","identifier"]) or (TYPE=="keyword" and VALUE in ['true','false','null','this']) or (TYPE == "symbol" and VALUE in ["(","-","~"]):
             self.parseTree.append({"type":"open","value":"expression"})
 
-            self.compileExpression(f"{parent}[{count}]")
-            count += 1
+            tmp = jackExpressions.Expressions()
+            expList.append(tmp)
+            self.compileExpression(tmp)
 
             self.parseTree.append({"type":"close","value":"expression"})
-            type,value = self.seeNextToken()
-            while type == "symbol" and value == ",":
+            TYPE, VALUE = self.seeNextToken()
+            while TYPE == "symbol" and VALUE == ",":
                 self.eat("symbol", [","])
                 self.parseTree.append({"type":"open","value":"expression"})
 
-                self.compileExpression(f"{parent}[{count}]")
-                count += 1
+                tmp = jackExpressions.Expressions()
+                expList.append(tmp)
+                self.compileExpression(tmp)
 
                 self.parseTree.append({"type":"close","value":"expression"})
-                type,value = self.seeNextToken()
+                TYPE, VALUE = self.seeNextToken()
 
+        parent.addChildren(expList)
 
     ## subroutineCall: subroutineName '(' expressionList ')' | (className|varName)'.'subroutineName '(' expressionList ')'
-    def compileSubroutineCall(self, eatName = True, Name = ""):
+    def compileSubroutineCall(self, eatName, parent):
 
-        fullName = ""
         if eatName:
-            type,value = self.seeNextToken()
-            fullName += value
             self.eat("identifier")
 
-        type,value = self.seeNextToken()
-        if type == "symbol" and value == ".":
+        TYPE, VALUE = self.seeNextToken()
+        if TYPE == "symbol" and VALUE == ".":
             self.eat("symbol",["."])
-            type,value = self.seeNextToken()
-            fullName += "." + value
             self.eat("identifier")
         
-        if eatName == False:
-            fullName = Name
-
         # '(' expressionList ')'
         self.eat("symbol",["("])    
         self.parseTree.append({"type":"open","value":"expressionList"})
-        self.compileExpressionList("{}".format(fullName))
+        self.compileExpressionList(parent)
         self.parseTree.append({"type":"close","value":"expressionList"})
         self.eat("symbol",[")"])    
