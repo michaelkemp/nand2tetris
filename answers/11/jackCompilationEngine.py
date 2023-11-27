@@ -561,13 +561,16 @@ class CompilationEngine:
                     va = self.seeSubroutineCall()
                 else:
                     ty,va = self.seeNextToken()
-                    parent.addTerm(va,"var")
                 ## GEN -- /TERM
 
                 self.eat("identifier")
 
                 TYPE, VALUE = self.seeNextToken()
                 match VALUE:
+                    # subroutineCall    
+                    case "(" | ".":
+                        self.compileSubroutineCall(False, va, parent)
+
                     # '[' expression ']'
                     case "[":
 
@@ -579,10 +582,9 @@ class CompilationEngine:
                         self.parseTree.append({"type":"close","value":"expression"})
                         self.eat("symbol",["]"])
 
-                    # subroutineCall    
-                    case "(" | ".":
-                        self.compileSubroutineCall(False, va, parent)
-
+                    # Simple Variable
+                    case _: 
+                        parent.addTerm(va,"var")
 
     ## expression: term (op term)*
     ## op: '+' | '-' | '*' | '/' | '&' | '|' | '<' | '>' | '='
@@ -609,7 +611,7 @@ class CompilationEngine:
  
 
     ## expressionList: (expression (',' expression)* )?
-    def compileExpressionList(self, parent):
+    def compileExpressionList(self):
 
         expList = []
         TYPE, VALUE = self.seeNextToken()
@@ -633,14 +635,11 @@ class CompilationEngine:
                 self.parseTree.append({"type":"close","value":"expression"})
                 TYPE, VALUE = self.seeNextToken()
 
-        parent.addTerm("crap2", "expList", expList)
+        return expList
 
 
     ## subroutineCall: subroutineName '(' expressionList ')' | (className|varName)'.'subroutineName '(' expressionList ')'
     def compileSubroutineCall(self, eatName, fullName, parent):
-
-        child = jackExpressions.Expressions()
-        parent.addTerm(fullName,"call", [child])
 
         if eatName:
             self.eat("identifier")
@@ -653,6 +652,8 @@ class CompilationEngine:
         # '(' expressionList ')'
         self.eat("symbol",["("])    
         self.parseTree.append({"type":"open","value":"expressionList"})
-        self.compileExpressionList(child)
+        expList = self.compileExpressionList()
         self.parseTree.append({"type":"close","value":"expressionList"})
-        self.eat("symbol",[")"])    
+        self.eat("symbol",[")"]) 
+        parent.addTerm(fullName,"call", expList)   
+

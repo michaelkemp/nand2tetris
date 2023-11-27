@@ -1,0 +1,12 @@
+class Array {
+    field int a, b, c;
+    static int d, e, f;
+
+    constructor Array new(int xa, int xb, int xc) {
+        var int i, j;
+        let a = xa[1];
+        let b = xa[2] + xb[i + j * xc[55 + 81 / 4 * a]] / xa[55*c] ;
+        let c = xa * (xb + -xc);
+        return this;
+    }
+}

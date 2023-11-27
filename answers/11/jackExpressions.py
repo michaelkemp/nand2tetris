@@ -1,3 +1,4 @@
+import json
 
 class Expressions:
     def __init__(self):
@@ -12,17 +13,18 @@ class Expressions:
              }
         )
 
-    def printExpression(self, parent=None):
+    def printExpression(self, parent=None, count=0):
+        print(" " * count, end="")
         if parent == None:
             print("EXP - ",end="")
         else:
             print(f"{parent} - ",end="")
 
         for exp in self.Expression:
-            print("{}, ".format(exp["data"]), end="")
+            print("{}".format(exp["data"]), end="")
+        print("")
 
         for exp in self.Expression:
             if exp["child"]:
                 for chexp in exp["child"]:
-                    print("\n")
-                    chexp.printExpression(exp["data"])
+                    chexp.printExpression(exp["data"], count+2)
