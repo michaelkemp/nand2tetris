@@ -3,19 +3,14 @@ class Expressions:
     def __init__(self):
         self.Expression = []
 
-    def addTerm(self, data, type, child=None):
+    def addTerm(self, data, type, child=[]):
         self.Expression.append(
             {
                 "data": data,
                 "type": type,
-                "child": child,
-                "children": None
+                "child": child
              }
-
         )
-
-    def addChildren(self, children):
-        self.Expression[-1]["children"] = children
 
     def printExpression(self, parent=None):
         if parent == None:
@@ -25,11 +20,9 @@ class Expressions:
 
         for exp in self.Expression:
             print("{}, ".format(exp["data"]), end="")
+
         for exp in self.Expression:
-            if exp["child"] is not None:
-                print("\n")
-                exp["child"].printExpression(exp["data"])
-            if  exp["children"] is not None:
-                for expList in exp["children"]:
+            if exp["child"]:
+                for chexp in exp["child"]:
                     print("\n")
-                    expList.printExpression(exp["data"])
+                    chexp.printExpression(exp["data"])

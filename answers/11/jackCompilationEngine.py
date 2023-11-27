@@ -461,7 +461,7 @@ class CompilationEngine:
         ## GEN -- /EXPRESSION
 
         self.eat("keyword",["do"])
-        self.compileSubroutineCall(True, doExpression)
+        self.compileSubroutineCall(True, "crap", doExpression)
         self.eat("symbol",[";"])
 
         ## GEN -- EXPRESSION
@@ -497,7 +497,6 @@ class CompilationEngine:
 
     ## term: integerConstant | stringConstant | keywordConstant | varName | varName '[' expression ']' | subroutineCall | '(' expression ')' | unaryOP term
     def compileTerm(self, parent):
-        print("==================",type(parent))
         TYPE, VALUE = self.seeNextToken()
 
         match TYPE:
@@ -560,8 +559,6 @@ class CompilationEngine:
                 ## GEN -- TERM
                 if self.seeSubroutineCall():
                     va = self.seeSubroutineCall()
-                    tmp = jackExpressions.Expressions()
-                    parent.addTerm(va,"call", tmp)
                 else:
                     ty,va = self.seeNextToken()
                     parent.addTerm(va,"var")
@@ -576,13 +573,15 @@ class CompilationEngine:
 
                         self.eat("symbol",["["])
                         self.parseTree.append({"type":"open","value":"expression"})
-                        self.compileExpression(parent)
+                        child = jackExpressions.Expressions()
+                        parent.addTerm(va,"array", [child])
+                        self.compileExpression(child)
                         self.parseTree.append({"type":"close","value":"expression"})
                         self.eat("symbol",["]"])
 
                     # subroutineCall    
                     case "(" | ".":
-                        self.compileSubroutineCall(False, tmp)
+                        self.compileSubroutineCall(False, va, parent)
 
 
     ## expression: term (op term)*
@@ -634,10 +633,14 @@ class CompilationEngine:
                 self.parseTree.append({"type":"close","value":"expression"})
                 TYPE, VALUE = self.seeNextToken()
 
-        parent.addChildren(expList)
+        parent.addTerm("crap2", "expList", expList)
+
 
     ## subroutineCall: subroutineName '(' expressionList ')' | (className|varName)'.'subroutineName '(' expressionList ')'
-    def compileSubroutineCall(self, eatName, parent):
+    def compileSubroutineCall(self, eatName, fullName, parent):
+
+        child = jackExpressions.Expressions()
+        parent.addTerm(fullName,"call", [child])
 
         if eatName:
             self.eat("identifier")
@@ -650,6 +653,6 @@ class CompilationEngine:
         # '(' expressionList ')'
         self.eat("symbol",["("])    
         self.parseTree.append({"type":"open","value":"expressionList"})
-        self.compileExpressionList(parent)
+        self.compileExpressionList(child)
         self.parseTree.append({"type":"close","value":"expressionList"})
         self.eat("symbol",[")"])    
