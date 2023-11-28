@@ -365,7 +365,8 @@ class CompilationEngine:
             self.compileExpression(letExpression)
 
             ## GEN -- EXPRESSION
-            letExpression.printExpression()
+            letExpression.getOutput()
+            letExpression.printExpression("Let[]")
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -382,7 +383,8 @@ class CompilationEngine:
         self.compileExpression(letExpression)
 
         ## GEN -- EXPRESSION
-        letExpression.printExpression()
+        letExpression.getOutput()
+        letExpression.printExpression("Let")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -403,7 +405,8 @@ class CompilationEngine:
         self.compileExpression(ifExpression)
 
         ## GEN -- EXPRESSION
-        ifExpression.printExpression()
+        ifExpression.getOutput()
+        ifExpression.printExpression("If")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -441,7 +444,8 @@ class CompilationEngine:
         self.compileExpression(whileExpression)
 
         ## GEN -- EXPRESSION
-        whileExpression.printExpression()
+        whileExpression.getOutput()
+        whileExpression.printExpression("While")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -465,7 +469,8 @@ class CompilationEngine:
         self.eat("symbol",[";"])
 
         ## GEN -- EXPRESSION
-        doExpression.printExpression()
+        doExpression.getOutput()
+        doExpression.printExpression("Do")
         ## GEN -- /EXPRESSION
 
 
@@ -488,7 +493,8 @@ class CompilationEngine:
             self.compileExpression(returnExpression)
 
             ## GEN -- EXPRESSION
-            returnExpression.printExpression()
+            returnExpression.getOutput()
+            returnExpression.printExpression("Return")
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
