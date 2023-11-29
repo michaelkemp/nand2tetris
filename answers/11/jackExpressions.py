@@ -3,10 +3,6 @@ class Expressions:
     def __init__(self):
         self.Expression = []
     
-    def getOutput(self):
-        final = self.parseExp([])
-        print("=========================",final)
-    
     def addTerm(self, data, type, child=[]):
         self.Expression.append(
             {
@@ -15,6 +11,27 @@ class Expressions:
                 "child": child
              }
         )
+
+    def getOutput(self):
+        self.parseExp()
+        fullExp = self.flattenExp([])
+        self.printExpression()
+        print("--",fullExp)
+
+    def flattenExp(self, flat):
+        for exp in self.Expression:
+            if exp["child"]:
+                for chexp in exp["child"]:
+                    flat = chexp.flattenExp(flat)
+            flat.append([exp["data"],exp["type"]])
+        return flat
+    
+    def parseExp(self):
+        self.shuntingYard()
+        for exp in self.Expression:
+            if exp["child"]:
+                for chexp in exp["child"]:
+                    chexp.parseExp()
 
     def printExpression(self, parent=None, count=0):
         print(" " * count, end="")
@@ -30,24 +47,9 @@ class Expressions:
         for exp in self.Expression:
             if exp["child"]:
                 for chexp in exp["child"]:
-                    chexp.printExpression(exp["data"], count+2)
+                    chexp.printExpression(exp["data"], count+5)
 
-
-    def parseExp(self, final):
-        for exp in self.Expression:
-            if exp["child"]:
-                for chexp in exp["child"]:
-                    final = chexp.parseExp(final)
-            final.append([exp["data"],exp["type"]])
-        print(final)
-        #for token, blap in self.shuntingYard(expList):
-        #    final.append([token,blap])
-
-        return final
-
-
-    def shuntingYard(self, expList):
-
+    def shuntingYard(self):
         operators = {
             '|': [2, "L"], 
             '&': [3, "L"], 
@@ -66,28 +68,33 @@ class Expressions:
         operatorStack = []
         prevToken = None
 
-        for token,blap in expList:
+        for exp in self.Expression:
+            token = exp["data"]
+            tokType = exp["type"]
+            tokKids = exp["child"]
+
             if token not in ["+", "-", "*", "/", "&", "|", "<", ">", "=", "~", "(", ")"]:
-                outputQueue.append([token,blap])
+                outputQueue.append({"data": token, "type": tokType, "child": tokKids})
+
             if token in ["+", "-", "*", "/", "&", "|", "<", ">", "=", "~"]:
                 if (token == "-") and (prevToken is None or prevToken in ["(", "+", "-", "*", "/", "&", "|", "<", ">", "=", "~"]): ## UNARY MINUS
                     token = "m"
                 while ( 
                     operatorStack and 
-                    (operatorStack[-1][0] in operators) and
+                    (operatorStack[-1]["data"] in operators) and
                         (
-                            (operators[operatorStack[-1][0]][0] > operators[token][0]) or
+                            (operators[operatorStack[-1]["data"]][0] > operators[token][0]) or
                             (
-                                operators[operatorStack[-1][0]][0] == operators[token][0] and 
-                                operators[operatorStack[-1][0]][1] == "L"
+                                operators[operatorStack[-1]["data"]][0] == operators[token][0] and 
+                                operators[operatorStack[-1]["data"]][1] == "L"
                             )
                         )
                     ):
                     outputQueue.append(operatorStack.pop())
                 
-                operatorStack.append([token,blap])
+                operatorStack.append({"data": token, "type": tokType, "child": tokKids})
             if token == "(":
-                operatorStack.append([token,blap])
+                operatorStack.append({"data": token, "type": tokType, "child": tokKids})
             if token == ")":
                 while operatorStack and operatorStack[-1][0] != '(':
                     outputQueue.append(operatorStack.pop())
@@ -98,4 +105,4 @@ class Expressions:
         while operatorStack:
             outputQueue.append(operatorStack.pop())
         
-        return outputQueue
+        self.Expression = outputQueue

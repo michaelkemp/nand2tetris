@@ -384,7 +384,7 @@ class CompilationEngine:
 
         ## GEN -- EXPRESSION
         letExpression.getOutput()
-        letExpression.printExpression("Let")
+        ##letExpression.printExpression("Let")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
