@@ -12,11 +12,11 @@ class Expressions:
              }
         )
 
-    def getOutput(self):
+    def getExp(self):
         self.parseExp()
         fullExp = self.flattenExp([])
-        self.printExpression()
-        print("--",fullExp)
+        ## self.printExpression()
+        return fullExp
 
     def flattenExp(self, flat):
         for exp in self.Expression:

@@ -350,6 +350,10 @@ class CompilationEngine:
     ## letStatement: 'let' varName ('[' expression ']')? '=' expression ';'
     def compileLet(self):
         self.eat("keyword",["let"])
+
+        TYPE, VALUE = self.seeNextToken()
+        identifier = {"type":"let", "value":VALUE}
+
         self.eat("identifier")
 
         # ('[' expression ']')?
@@ -359,14 +363,15 @@ class CompilationEngine:
             self.parseTree.append({"type":"open","value":"expression"})
 
             ## GEN -- EXPRESSION
-            letExpression = jackExpressions.Expressions()
+            rawExpression = jackExpressions.Expressions()
             ## GEN -- /EXPRESSION
 
-            self.compileExpression(letExpression)
+            self.compileExpression(rawExpression)
 
             ## GEN -- EXPRESSION
-            letExpression.getOutput()
-            letExpression.printExpression("Let[]")
+            parsedExpression = rawExpression.getExp()
+            self.language(parsedExpression, identifier)
+            print(json.dumps(parsedExpression))
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -377,14 +382,15 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        letExpression = jackExpressions.Expressions()
+        rawExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression(letExpression)
+        self.compileExpression(rawExpression)
 
         ## GEN -- EXPRESSION
-        letExpression.getOutput()
-        ##letExpression.printExpression("Let")
+        parsedExpression = rawExpression.getExp()
+        self.language(parsedExpression, identifier)
+        print(json.dumps(parsedExpression))
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -399,14 +405,15 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        ifExpression = jackExpressions.Expressions()
+        rawExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression(ifExpression)
+        self.compileExpression(rawExpression)
 
         ## GEN -- EXPRESSION
-        ifExpression.getOutput()
-        ifExpression.printExpression("If")
+        parsedExpression = rawExpression.getExp()
+        self.language(parsedExpression)
+        ##print(json.dumps(parsedExpression, indent=2))
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -438,14 +445,15 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"expression"})
 
         ## GEN -- EXPRESSION
-        whileExpression = jackExpressions.Expressions()
+        rawExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
-        self.compileExpression(whileExpression)
+        self.compileExpression(rawExpression)
 
         ## GEN -- EXPRESSION
-        whileExpression.getOutput()
-        whileExpression.printExpression("While")
+        parsedExpression = rawExpression.getExp()
+        self.language(parsedExpression)
+        ##print(json.dumps(parsedExpression, indent=2))
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -461,16 +469,17 @@ class CompilationEngine:
     ## doStatement: 'do' subroutineCall ';'
     def compileDo(self):
         ## GEN -- EXPRESSION
-        doExpression = jackExpressions.Expressions()
+        rawExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
         self.eat("keyword",["do"])
-        self.compileSubroutineCall(True, "crap", doExpression)
+        self.compileSubroutineCall(True, "crap", rawExpression)
         self.eat("symbol",[";"])
 
         ## GEN -- EXPRESSION
-        doExpression.getOutput()
-        doExpression.printExpression("Do")
+        parsedExpression = rawExpression.getExp()
+        self.language(parsedExpression)
+        ##print(json.dumps(parsedExpression, indent=2))
         ## GEN -- /EXPRESSION
 
 
@@ -487,14 +496,15 @@ class CompilationEngine:
             self.parseTree.append({"type":"open","value":"expression"})
 
             ## GEN -- EXPRESSION
-            returnExpression = jackExpressions.Expressions()
+            rawExpression = jackExpressions.Expressions()
             ## GEN -- /EXPRESSION
 
-            self.compileExpression(returnExpression)
+            self.compileExpression(rawExpression)
 
             ## GEN -- EXPRESSION
-            returnExpression.getOutput()
-            returnExpression.printExpression("Return")
+            parsedExpression = rawExpression.getExp()
+            self.language(parsedExpression)
+            ##print(json.dumps(parsedExpression, indent=2))
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -663,3 +673,31 @@ class CompilationEngine:
         self.eat("symbol",[")"]) 
         parent.addTerm(fullName,"call", expList)   
 
+    def language(self, expression, identifier={}):
+        vm = []
+        for exp,typ in expression:
+            match typ:
+                case "var":
+                    for symbols in self.subroutineSymbolTable:
+                        if exp == symbols["name"]:
+                            vm.append("push {} {}".format(symbols["kind"],symbols["num"]))
+                            #print("S {} {} {} {} -- {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"], exp, typ))
+                    for symbols in self.classSymbolTable:
+                        if exp == symbols["name"]:
+                            vm.append("push {} {}".format(symbols["kind"],symbols["num"]))
+                            #print("C {} {} {} {} -- {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"], exp, typ))
+                case "constant":
+                    vm.append("push constant {}".format(exp))
+                case "symbol":
+                    match exp:
+                        case "+": vm.append("add")
+                        case "-": vm.append("neg")
+                        case "*": vm.append("call Math.multiply 2")
+                        case "/": vm.append("call Math.divide 2")
+                        case "&": vm.append("call Math.AND 2")
+                        case "|": vm.append("call Math.OR 2")
+                        case "<": vm.append("call Math.LT 2")
+                        case ">": vm.append("call Math.GT 2")
+                        case "=": vm.append("call Math.EQ 2")
+
+        print(identifier, vm)                
