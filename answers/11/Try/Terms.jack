@@ -1,7 +1,5 @@
 class Terms {
     field int a, b, c;
-    static int d, e, f;
-
     constructor Terms new(int xa, int xb, int xc) {
         let a = xa;
         let b = xa + xb ;

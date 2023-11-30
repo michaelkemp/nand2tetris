@@ -6,7 +6,7 @@ class CompilationEngine:
         self.tokenPtr = 0
         self.parseTree = []
 
-        self.vmcode = []
+        self.vmCode = []
         self.classSymbolTable = [] 
         self.subroutineSymbolTable = []
         self.currentClassName = ""
@@ -68,7 +68,7 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"class"})
         self.compileClass()
         self.parseTree.append({"type":"close","value":"class"})
-        return self.parseTree
+        return self.vmCode
 
 
     def eat(self, expType, expValues=None):
@@ -76,7 +76,7 @@ class CompilationEngine:
         if (TYPE == expType and expValues is None) or (TYPE == expType and VALUE in expValues):
             self.parseTree.append({"type":TYPE,"value":VALUE})
         else:
-            print("----",self.parseTree,"-----")
+            print("----",self.parseTree,"----")
             raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), TYPE, VALUE))
 
 
@@ -371,7 +371,7 @@ class CompilationEngine:
             ## GEN -- EXPRESSION
             parsedExpression = rawExpression.getExp()
             self.language(parsedExpression, identifier)
-            print(json.dumps(parsedExpression))
+            ##print(json.dumps(parsedExpression))
             ## GEN -- /EXPRESSION
 
             self.parseTree.append({"type":"close","value":"expression"})
@@ -390,7 +390,7 @@ class CompilationEngine:
         ## GEN -- EXPRESSION
         parsedExpression = rawExpression.getExp()
         self.language(parsedExpression, identifier)
-        print(json.dumps(parsedExpression))
+        ##print(json.dumps(parsedExpression))
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -485,6 +485,10 @@ class CompilationEngine:
 
     ## returnStatement: 'return' expression? ';'
     def compileReturn(self):
+
+        TYPE, VALUE = self.seeNextToken()
+        identifier = {"type":"return", "value":VALUE}
+       
         self.eat("keyword",["return"])
 
         # ;
@@ -503,7 +507,7 @@ class CompilationEngine:
 
             ## GEN -- EXPRESSION
             parsedExpression = rawExpression.getExp()
-            self.language(parsedExpression)
+            self.language(parsedExpression, identifier)
             ##print(json.dumps(parsedExpression, indent=2))
             ## GEN -- /EXPRESSION
 
@@ -674,30 +678,64 @@ class CompilationEngine:
         parent.addTerm(fullName,"call", expList)   
 
     def language(self, expression, identifier={}):
-        vm = []
+
         for exp,typ in expression:
             match typ:
                 case "var":
                     for symbols in self.subroutineSymbolTable:
                         if exp == symbols["name"]:
-                            vm.append("push {} {}".format(symbols["kind"],symbols["num"]))
-                            #print("S {} {} {} {} -- {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"], exp, typ))
+                            self.vmCode.append("push {} {}".format(symbols["kind"],symbols["num"]))
                     for symbols in self.classSymbolTable:
                         if exp == symbols["name"]:
-                            vm.append("push {} {}".format(symbols["kind"],symbols["num"]))
-                            #print("C {} {} {} {} -- {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"], exp, typ))
+                            if (symbols["kind"] == "field"):    
+                                self.vmCode.append("push this {}".format(symbols["num"]))
+                            else:
+                                self.vmCode.append("push {} {}".format(symbols["kind"],symbols["num"]))
                 case "constant":
-                    vm.append("push constant {}".format(exp))
+                    self.vmCode.append("push constant {}".format(exp))
                 case "symbol":
                     match exp:
-                        case "+": vm.append("add")
-                        case "-": vm.append("neg")
-                        case "*": vm.append("call Math.multiply 2")
-                        case "/": vm.append("call Math.divide 2")
-                        case "&": vm.append("call Math.AND 2")
-                        case "|": vm.append("call Math.OR 2")
-                        case "<": vm.append("call Math.LT 2")
-                        case ">": vm.append("call Math.GT 2")
-                        case "=": vm.append("call Math.EQ 2")
+                        case "+": self.vmCode.append("add")
+                        case "-": self.vmCode.append("neg")
+                        case "*": self.vmCode.append("call Math.multiply 2")
+                        case "/": self.vmCode.append("call Math.divide 2")
+                        case "&": self.vmCode.append("call Math.AND 2")
+                        case "|": self.vmCode.append("call Math.OR 2")
+                        case "<": self.vmCode.append("call Math.LT 2")
+                        case ">": self.vmCode.append("call Math.GT 2")
+                        case "=": self.vmCode.append("call Math.EQ 2")
 
-        print(identifier, vm)                
+                case "unary":
+                    match exp:
+                        case "m": self.vmCode.append("neg")
+                        case "~": self.vmCode.append("call Math.NOT 1")
+
+        match identifier["type"]:
+            case "let":
+                if (identifier["type"] == "let"):
+                    for symbols in self.subroutineSymbolTable:
+                        if identifier["value"] == symbols["name"]:
+                            self.vmCode.append("pop {} {}".format(symbols["kind"],symbols["num"]))
+                    for symbols in self.classSymbolTable:
+                        if identifier["value"] == symbols["name"]:
+                            if (symbols["kind"] == "field"):    
+                                self.vmCode.append("pop this {}".format(symbols["num"]))
+                            else:
+                                self.vmCode.append("pop {} {}".format(symbols["kind"],symbols["num"]))
+            case "return":
+                match expression[0][0]:
+                    case "true":
+                        self.vmCode.append("push constant 1")
+                        self.vmCode.append("neg")
+                        self.vmCode.append("return")
+                    case "false":
+                        self.vmCode.append("push constant 0")
+                        self.vmCode.append("return")
+                    case "null":
+                        self.vmCode.append("push constant 0")
+                        self.vmCode.append("return")
+                    case "this":
+                        self.vmCode.append("push pointer 0")
+                        self.vmCode.append("return")
+        
+        #print(self.vmCode, expression, identifier)

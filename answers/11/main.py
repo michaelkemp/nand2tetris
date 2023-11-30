@@ -16,8 +16,8 @@ def main(pathData):
 
         ## Initialize CompilationEngine
         jackCmpEng = jackCompilationEngine.CompilationEngine(tokens)
-        parseTree = jackCmpEng.parseTokens()
-
+        vmCode = jackCmpEng.parseTokens()
+        print(vmCode)
 
 if __name__ == "__main__":
     

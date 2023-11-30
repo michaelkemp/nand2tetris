@@ -96,7 +96,7 @@ class Expressions:
             if token == "(":
                 operatorStack.append({"data": token, "type": tokType, "child": tokKids})
             if token == ")":
-                while operatorStack and operatorStack[-1][0] != '(':
+                while operatorStack and operatorStack[-1]["data"] != '(':
                     outputQueue.append(operatorStack.pop())
                 operatorStack.pop()
 
