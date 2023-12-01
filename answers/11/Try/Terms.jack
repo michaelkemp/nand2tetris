@@ -1,9 +1,17 @@
 class Terms {
     field int a, b, c;
     constructor Terms new(int xa, int xb, int xc) {
+        var int i;
         let a = xa;
         let b = xa + xb ;
         let c = xa * (xb + -xc);
+
+        let i = 0;
+        while (i < 7) {
+            let i = i + 1;
+            do Output.printInt(i);
+        }
+
         return this;
     }
 }
