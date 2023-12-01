@@ -55,7 +55,7 @@ class Translator:
         for expression in vm:
 
             # Comment asm output with current expression
-            ASM += "\n// {}\n".format(expression)
+            ASM += f"\n// {expression}\n"
 
             command = expression.split(" ", 1)[0].strip()
             match command:
@@ -94,7 +94,7 @@ class Translator:
                     ASM += self.logicNot()
 
                 case _:
-                    raise SyntaxError("Unknown expression: {}".format(expression))
+                    raise SyntaxError(f"Unknown expression: {expression}")
             
         return ASM
         
@@ -115,7 +115,7 @@ class Translator:
                     case "constant":
                         return self.constantPush(variable)
                     case _:
-                        raise SyntaxError("Unknown expression: {}".format(expression))
+                        raise SyntaxError(f"Unknown expression: {expression}")
             case "pop":
                 match segment:
                     case "local" | "argument" | "this" | "that":
@@ -127,7 +127,7 @@ class Translator:
                     case "pointer":
                         return self.pointerPop(variable)
                     case _:
-                        raise SyntaxError("Unknown expression: {}".format(expression))
+                        raise SyntaxError(f"Unknown expression: {expression}")
 
 
     def branch(self, expression):
@@ -136,17 +136,17 @@ class Translator:
         match command:
             case "label":
                 # Write Label
-                tmp += "({}),".format(label)
+                tmp += f"({label}),"
             case "goto":
                 # Unconditional Jump
-                tmp += "@{},0;JMP,".format(label)
+                tmp += f"@{label},0;JMP,"
             case "if-goto":
                 # Decrement the Stack Pointer
                 tmp += "@SP,M=M-1,"
                 # D = *SP
                 tmp += "@SP,A=M,D=M,"
                 # Jump if D!=0
-                tmp += "@{},D;JNE,".format(label)
+                tmp += f"@{label},D;JNE,"
 
         return tmp.replace(",","\n")
     
@@ -156,7 +156,7 @@ class Translator:
         tmp = ""
 
         # (functionName)            // declare LABEL for function entry
-        tmp += "({}),".format(functionName)
+        tmp += f"({functionName}),"
 
         # push 0 NVars times        // nVars are the number of local variables, initialize to 0
         for i in range(0, int(nVars)):
@@ -173,7 +173,7 @@ class Translator:
         self.retCnt += 1
 
         # push returnAddress        // using the LABEL declared below eg Foo$ret.1
-        tmp += "@{},D=A,@SP,A=M,M=D,@SP,M=M+1,".format(retAdr)
+        tmp += f"@{retAdr},D=A,@SP,A=M,M=D,@SP,M=M+1,"
 
         # push LCL                  // save LCL of caller
         tmp += "@LCL,D=M,@SP,A=M,M=D,@SP,M=M+1,"
@@ -189,16 +189,16 @@ class Translator:
 
         # ARG = SP - 5 - nArgs      // reposition ARG for callee
         back = int(nArgs) + 5
-        tmp += "@SP,D=M,@{},D=D-A,@ARG,M=D,".format(back)
+        tmp += f"@SP,D=M,@{back},D=D-A,@ARG,M=D,"
 
         # LCL = SP                  // reposition LCL for callee
         tmp += "@SP,D=M,@LCL,M=D,"
 
         # goto functionName         // transfer controll to the called function
-        tmp += "@{},0;JMP,".format(functionName)
+        tmp += f"@{functionName},0;JMP,"
 
         # (returnAddress)           // Declare lable for the return-address
-        tmp += "({}),".format(retAdr)
+        tmp += f"({retAdr}),"
 
         return tmp.replace(",","\n")
 
@@ -277,23 +277,23 @@ class Translator:
 
         match func:
             case "eq": # Jump to (true-i) if D == 0
-                tmp += "@true-{},D;JEQ,".format(self.jmpCnt) 
+                tmp += f"@true-{self.jmpCnt},D;JEQ," 
             case "gt":  # Jump to (true-i) if D > 0
-                tmp += "@true-{},D;JGT,".format(self.jmpCnt)
+                tmp += f"@true-{self.jmpCnt},D;JGT,"
             case "lt": # Jump to (true-i) if D < 0
-                tmp += "@true-{},D;JLT,".format(self.jmpCnt)
+                tmp += f"@true-{self.jmpCnt},D;JLT,"
 
         # if NOT true, put 0 on the stack
         tmp += "@SP,A=M,M=0,"
 
         # goto end-i    
-        tmp += "@end-{},0;JMP,".format(self.jmpCnt)  
+        tmp += f"@end-{self.jmpCnt},0;JMP,"  
             
         # if true, put -1 on stack
-        tmp += "(true-{}),@SP,A=M,M=-1,".format(self.jmpCnt)
+        tmp += f"(true-{self.jmpCnt}),@SP,A=M,M=-1,"
 
         # end-i, Increment SP
-        tmp += "(end-{}),@SP,M=M+1,".format(self.jmpCnt)
+        tmp += f"(end-{self.jmpCnt}),@SP,M=M+1,"
 
         self.jmpCnt += 1
 
@@ -359,7 +359,7 @@ class Translator:
         tmp = ""
 
         # addr = segmentPointer+i
-        tmp += "@{},D=M,@{},D=D+A,@R13,M=D,".format(self.segNames[segment],variable)
+        tmp += f"@{self.segNames[segment]},D=M,@{variable},D=D+A,@R13,M=D,"
 
         # *SP = *addr
         tmp += "@R13,A=M,D=M,@SP,A=M,M=D,"
@@ -373,7 +373,7 @@ class Translator:
         tmp = ""
 
         # addr = segmentPointer+i
-        tmp += "@{},D=M,@{},D=D+A,@R13,M=D,".format(self.segNames[segment],variable)
+        tmp += f"@{self.segNames[segment]},D=M,@{variable},D=D+A,@R13,M=D,"
 
         # Decrement the Stack Pointer
         tmp += "@SP,M=M-1,"
@@ -388,7 +388,7 @@ class Translator:
         tmp = ""
 
         # *SP = *static
-        tmp += "@{},D=M,@SP,A=M,M=D,".format(self.staticName + "." + variable)
+        tmp += f"@{self.staticName}.{variable},D=M,@SP,A=M,M=D,"
 
         # Increment the Stack Pointer
         tmp += "@SP,M=M+1,"
@@ -402,7 +402,7 @@ class Translator:
         tmp += "@SP,M=M-1,"
 
         # *static = *SP
-        tmp += "@SP,A=M,D=M,@{},M=D,".format(self.staticName + "." + variable)
+        tmp += f"@SP,A=M,D=M,@{self.staticName}.{variable},M=D,"
 
         return tmp.replace(",","\n")
 
@@ -411,7 +411,7 @@ class Translator:
         tmp = ""
 
         # addr = R5+i
-        tmp += "@R5,D=A,@{},D=D+A,@R13,M=D,".format(variable)
+        tmp += f"@R5,D=A,@{variable},D=D+A,@R13,M=D,"
 
         # *SP = *addr
         tmp += "@R13,A=M,D=M,@SP,A=M,M=D,"
@@ -425,7 +425,7 @@ class Translator:
         tmp = ""
 
         # addr = R5+i
-        tmp += "@R5,D=A,@{},D=D+A,@R13,M=D,".format(variable)
+        tmp += f"@R5,D=A,@{variable},D=D+A,@R13,M=D,"
 
         # Decrement the Stack Pointer
         tmp += "@SP,M=M-1,"
@@ -440,7 +440,7 @@ class Translator:
         tmp = ""
 
         # *SP = THIS/THAT
-        tmp += "@{},D=M,@SP,A=M,M=D,".format(self.disordat[variable])
+        tmp += f"@{self.disordat[variable]},D=M,@SP,A=M,M=D,"
 
         # Increment the Stack Pointer
         tmp += "@SP,M=M+1,"
@@ -454,7 +454,7 @@ class Translator:
         tmp += "@SP,M=M-1,"
 
         # THIS/THAT = *SP
-        tmp += "@SP,A=M,M=D,@{},M=D,".format(self.disordat[variable])
+        tmp += f"@SP,A=M,M=D,@{self.disordat[variable]},M=D,"
 
         return tmp.replace(",","\n")
 
@@ -462,7 +462,7 @@ class Translator:
         tmp = ""
 
         # *SP = i
-        tmp += "@{},D=A,@SP,A=M,M=D,".format(variable)
+        tmp += f"@{variable},D=A,@SP,A=M,M=D,"
 
         # Increment the Stack Pointer
         tmp += "@SP,M=M+1,"

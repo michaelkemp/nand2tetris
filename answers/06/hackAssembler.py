@@ -145,20 +145,20 @@ class Assembler:
         try:
             val = int(cmd)
             if (val < 32768):
-                address = '{0:016b}'.format(val)
+                address = f"{val:016b}"
                 return address
             else:
-                raise SyntaxError("Addressing value exceeds range: {}".format(command))
+                raise SyntaxError(f"Addressing value exceeds range: {command}")
         except ValueError:
             if cmd in self.VARIABLES:
-                address = '{0:016b}'.format(int(self.VARIABLES[cmd]))
+                address = f"{int(self.VARIABLES[cmd]):016b}"
             else: ## ADD NEW VARIABLE
                 if self.VARREGISTER < self.VARIABLES['SCREEN']:
                     self.VARIABLES[cmd] = self.VARREGISTER
-                    address = '{0:016b}'.format(self.VARREGISTER)
+                    address = f"{self.VARREGISTER:016b}"
                     self.VARREGISTER += 1
                 else:
-                    raise SyntaxError("Addressing value exceeds range: {}".format(command))
+                    raise SyntaxError(f"Addressing value exceeds range: {command}")
         return address    
 
 
@@ -185,16 +185,16 @@ class Assembler:
         if comp in self.COMPUTATION:
             address += self.COMPUTATION[comp]
         else:
-            raise SyntaxError("Unrecognized Computation: {}".format(command))
+            raise SyntaxError(f"Unrecognized Computation: {command}")
             
         if dest in self.DESTINATION:
             address += self.DESTINATION[dest]
         else:
-            raise SyntaxError("Unrecognized Destination: {}".format(command))
+            raise SyntaxError(f"Unrecognized Destination: {command}")
 
         if jump in self.JUMP:
             address += self.JUMP[jump]
         else:
-            raise SyntaxError("Unrecognized Jump: {}".format(command))
+            raise SyntaxError(f"Unrecognized Jump: {command}")
             
         return address

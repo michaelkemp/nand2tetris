@@ -41,7 +41,7 @@ class Expressions:
             print(f"{parent} - ",end="")
 
         for exp in self.Expression:
-            print("{}".format(exp["data"]), end="")
+            print(f"{exp['data']}", end="")
         print("")
 
         for exp in self.Expression:

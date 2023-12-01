@@ -19,7 +19,7 @@ def main(pathData):
         for token in tokens:
             tp = token["type"]
             vl = token["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quote;')
-            xml += "<{}> {} </{}>\n".format(tp, vl, tp)
+            xml += f"<{tp}> {vl} </{tp}>\n"
         xml += "</tokens>\n"
         with open(xmlTPath, 'w') as xmlFile:
             xmlFile.write(xml)
@@ -41,15 +41,15 @@ def xmled(parseTreeList):
         value = parseTreeList[i]["value"].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&quot;')
         if type == "open":
             str += " "*tabCount
-            str += "<{}>\n".format(value)
+            str += f"<{value}>\n"
             tabCount += tabSpaces
         elif type == "close":
             tabCount -= tabSpaces
             str += " "*tabCount
-            str += "</{}>\n".format(value)
+            str += f"</{value}>\n"
         else:
             str += " "*tabCount
-            str += "<{}> {} </{}>\n".format(type,value,type)
+            str += f"<{type}> {value} </{type}>\n"
     return str
 
 if __name__ == "__main__":

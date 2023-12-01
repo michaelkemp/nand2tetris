@@ -19,14 +19,14 @@ class CompilationEngine:
 
 
     def printClassSymbolTable(self):
-        print("CLASS: {}".format(self.currentClassName))
+        print(f"CLASS: {self.currentClassName}")
         for symbols in sorted(self.classSymbolTable, key=lambda d: d['kind']):
-            print(" {} {} {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+            print(f" {symbols['kind']} {symbols['type']} {symbols['name']} {symbols['num']}")
 
     def printSubroutineSymbolTable(self):
-        print("SUBROUTINE: {}".format(self.currentSubroutineName))
+        print(f"SUBROUTINE: {self.currentSubroutineName}")
         for symbols in sorted(self.subroutineSymbolTable, key=lambda d: d['kind']):
-            print(" {} {} {} {}".format(symbols["kind"],symbols["type"],symbols["name"],symbols["num"]))
+            print(f" {symbols['kind']} {symbols['type']} {symbols['name']} {symbols['num']}")
 
 
     def getNextToken(self, inc=1):
@@ -77,7 +77,7 @@ class CompilationEngine:
             self.parseTree.append({"type":TYPE,"value":VALUE})
         else:
             print("----",self.parseTree,"----")
-            raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), TYPE, VALUE))
+            raise SyntaxError(f"Expected [{expType} {'|'.join(expValues)}] Received[{TYPE} {VALUE}]")
 
 
     ## TYPE: 'int'|'char'|'boolean'|className
@@ -89,7 +89,7 @@ class CompilationEngine:
         if (TYPE == "keyword" and VALUE in expValues) or (TYPE == "identifier"):
             self.parseTree.append({"type":TYPE,"value":VALUE})
         else:
-            raise SyntaxError("Type Error [{} {}]".format(TYPE, VALUE))
+            raise SyntaxError(f"Type Error [{TYPE} {VALUE}]")
         
         
     ## class: 'class' className '{' classVarDec* subroutineDec* '}'
@@ -684,15 +684,15 @@ class CompilationEngine:
                 case "var":
                     for symbols in self.subroutineSymbolTable:
                         if exp == symbols["name"]:
-                            self.vmCode.append("push {} {}".format(symbols["kind"],symbols["num"]))
+                            self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
                     for symbols in self.classSymbolTable:
                         if exp == symbols["name"]:
                             if (symbols["kind"] == "field"):    
-                                self.vmCode.append("push this {}".format(symbols["num"]))
+                                self.vmCode.append(f"push this {symbols['num']}")
                             else:
-                                self.vmCode.append("push {} {}".format(symbols["kind"],symbols["num"]))
+                                self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
                 case "constant":
-                    self.vmCode.append("push constant {}".format(exp))
+                    self.vmCode.append(f"push constant {exp}")
                 case "symbol":
                     match exp:
                         case "+": self.vmCode.append("add")
@@ -715,13 +715,13 @@ class CompilationEngine:
                 if (identifier["type"] == "let"):
                     for symbols in self.subroutineSymbolTable:
                         if identifier["value"] == symbols["name"]:
-                            self.vmCode.append("pop {} {}".format(symbols["kind"],symbols["num"]))
+                            self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
                     for symbols in self.classSymbolTable:
                         if identifier["value"] == symbols["name"]:
                             if (symbols["kind"] == "field"):    
-                                self.vmCode.append("pop this {}".format(symbols["num"]))
+                                self.vmCode.append(f"pop this {symbols['num']}")
                             else:
-                                self.vmCode.append("pop {} {}".format(symbols["kind"],symbols["num"]))
+                                self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
             case "return":
                 match expression[0][0]:
                     case "true":

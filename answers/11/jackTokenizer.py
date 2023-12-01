@@ -65,7 +65,7 @@ class Tokenizer:
 
             # symbols        
             for sym in self.symbols:
-                if re.search("^\{}".format(sym), self.jack):
+                if re.search(f"^\{sym}", self.jack):
                     self.jack = self.jack[1:]
                     type = "symbol"
                     value = sym
@@ -79,12 +79,12 @@ class Tokenizer:
                 type = "integerConstant"
                 value = theMatch
                 if int(value) < 0 or int(value) > 32767:
-                    raise OverflowError("Integer out of range: {}".format(value))
+                    raise OverflowError(f"Integer out of range: {value}")
                 self.tokens.append({"type":type,"value":value})
                 found = True
 
             # error
             if len(self.jack) > 0 and not found:
                 theMatch = re.match("^[\S]+", self.jack).group(0)
-                raise SyntaxError("Syntax Error: {}".format(theMatch))
+                raise SyntaxError(f"Syntax Error: {theMatch}")
                 

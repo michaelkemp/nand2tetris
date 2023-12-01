@@ -30,7 +30,7 @@ class CompilationEngine:
             self.parseTree.append({"type":type,"value":value})
         else:
             print("----",self.parseTree,"-----")
-            raise SyntaxError("Expected [{} {}] Received[{} {}]".format(expType, "|".join(expValues), type, value))
+            raise SyntaxError(f"Expected [{expType} {'|'.join(expValues)}] Received[{type} {value}]")
 
 
     ## type: 'int'|'char'|'boolean'|className
@@ -42,7 +42,7 @@ class CompilationEngine:
         if (type == "keyword" and value in expValues) or (type == "identifier"):
             self.parseTree.append({"type":type,"value":value})
         else:
-            raise SyntaxError("Type Error [{} {}]".format(type,value))
+            raise SyntaxError(f"Type Error [{type} {value}]")
         
         
     ## class: 'class' className '{' classVarDec* subroutineDec* '}'

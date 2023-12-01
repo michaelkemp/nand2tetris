@@ -36,4 +36,4 @@ if __name__ == "__main__":
         pathData.append({"asmPath": asmPath, "hackPath": hackPath})
         main(pathData)
     else:
-        raise FileNotFoundError("File not found{}".format(asmFilePath))
+        raise FileNotFoundError(f"File not found {asmFilePath}")
