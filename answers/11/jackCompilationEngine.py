@@ -17,6 +17,12 @@ class CompilationEngine:
         self.argumentCnt = 0
         self.localCnt = 0
 
+        self.WHILE_EXP = 0
+        self.WHILE_END = 0
+        self.IF_TRUE = 0
+        self.IF_FALSE = 0
+        self.IF_END = 0
+
 
     def printClassSymbolTable(self):
         print(f"CLASS: {self.currentClassName}")
@@ -420,8 +426,9 @@ class CompilationEngine:
         ## GEN -- EXPRESSION
         parsedExpression = rawExpression.getExp()
         self.vmExpression(parsedExpression)
-        self.vmCode.append("not")
-        self.vmCode.append("if-goto L1")
+        self.vmCode.append(f"if-goto IF_TRUE{self.IF_TRUE}")
+        self.vmCode.append(f"goto IF_FALSE{self.IF_FALSE}")
+        self.vmCode.append(f"label IF_TRUE{self.IF_TRUE}")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -430,25 +437,33 @@ class CompilationEngine:
         self.eat("symbol",["{"])
         self.parseTree.append({"type":"open","value":"statements"})
         self.compileStatements()
-        ## GEN -- STATEMENTS
-        self.vmCode.append("goto L2")
-        self.vmCode.append("label L2")
-        ## GEN -- /STATEMENTS
         self.parseTree.append({"type":"close","value":"statements"})
         self.eat("symbol",["}"])
 
         # ('else' '{' statements '}')?
         TYPE, VALUE = self.seeNextToken()
+        noElse = True
         if TYPE == "keyword" and VALUE == "else":
             self.eat("keyword",["else"])
             self.eat("symbol",["{"])
             self.parseTree.append({"type":"open","value":"statements"})
             self.compileStatements()
+            ## GEN -- STATEMENTS
+            self.vmCode.append(f"goto IF_END{self.IF_END}")
+            self.vmCode.append(f"label IF_FALSE{self.IF_FALSE}")
+            noElse = False
+            ## GEN -- /STATEMENTS
             self.parseTree.append({"type":"close","value":"statements"})
             self.eat("symbol",["}"])
         ## GEN -- STATEMENTS
-        self.vmCode.append("label L1")
+        if noElse:
+            self.vmCode.append(f"label IF_FALSE{self.IF_FALSE}")
+        else:
+            self.vmCode.append(f"label IF_END{self.IF_END}")
         ## GEN -- /STATEMENTS
+        self.IF_TRUE += 1
+        self.IF_FALSE += 1
+        self.IF_END += 1
 
 
 
@@ -467,10 +482,10 @@ class CompilationEngine:
 
         ## GEN -- EXPRESSION
         parsedExpression = rawExpression.getExp()
-        self.vmCode.append("label L1")
+        self.vmCode.append(f"label WHILE_EXP{self.WHILE_EXP}")
         self.vmExpression(parsedExpression)
         self.vmCode.append("not")
-        self.vmCode.append("if-goto L2")
+        self.vmCode.append(f"if-goto WHILE_END{self.WHILE_END}")
         ## GEN -- /EXPRESSION
 
         self.parseTree.append({"type":"close","value":"expression"})
@@ -480,21 +495,25 @@ class CompilationEngine:
         self.parseTree.append({"type":"open","value":"statements"})
         self.compileStatements()
         ## GEN -- STATEMENTS
-        self.vmCode.append("goto L1")
-        self.vmCode.append("label L2")
+        self.vmCode.append(f"goto WHILE_EXP{self.WHILE_EXP}")
+        self.vmCode.append(f"label WHILE_END{self.WHILE_END}")
         ## GEN -- /STATEMENTS
         self.parseTree.append({"type":"close","value":"statements"})
         self.eat("symbol",["}"])
-
+        self.WHILE_EXP += 1
+        self.WHILE_END += 1
+        
 
     ## doStatement: 'do' subroutineCall ';'
     def compileDo(self):
+
         ## GEN -- EXPRESSION
         rawExpression = jackExpressions.Expressions()
         ## GEN -- /EXPRESSION
 
         self.eat("keyword",["do"])
-        self.compileSubroutineCall(True, "crap", rawExpression)
+        va = self.seeSubroutineCall()
+        self.compileSubroutineCall(True, va, rawExpression)
         self.eat("symbol",[";"])
 
         ## GEN -- EXPRESSION
@@ -532,7 +551,7 @@ class CompilationEngine:
 
             ## GEN -- EXPRESSION
             parsedExpression = rawExpression.getExp()
-            self.vmExpression(parsedExpression, identifier)
+            self.vmExpression(parsedExpression)
             self.vmCode.append("return")
             ## GEN -- /EXPRESSION
 
@@ -700,11 +719,11 @@ class CompilationEngine:
         expList = self.compileExpressionList()
         self.parseTree.append({"type":"close","value":"expressionList"})
         self.eat("symbol",[")"]) 
-        parent.addTerm(fullName,"call", expList)   
+        parent.addTerm(fullName, "call", expList)   
 
 
-    def vmExpression(self, expression, identifier={}):
-
+    def vmExpression(self, expression):
+        print(expression)
         for exp,typ in expression:
             match typ:
                 case "var":
@@ -730,9 +749,11 @@ class CompilationEngine:
                         case "this":
                             self.vmCode.append("push pointer 0")
 
-
                 case "constant":
                     self.vmCode.append(f"push constant {exp}")
+
+                case "call":
+                    self.vmCode.append(f"call {exp}")
 
                 case "symbol":
                     match exp:
@@ -744,7 +765,7 @@ class CompilationEngine:
                         case "|": self.vmCode.append("call Math.OR 2")
                         case "<": self.vmCode.append("lt")
                         case ">": self.vmCode.append("gt")
-                        case "=": self.vmCode.append("call Math.EQ 2")
+                        case "=": self.vmCode.append("eq")
 
                 case "unary":
                     match exp:

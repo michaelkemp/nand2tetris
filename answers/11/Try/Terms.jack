@@ -2,14 +2,32 @@ class Terms {
     field int a, b, c;
     constructor Terms new(int xa, int xb, int xc) {
         var int i;
+        var int j;
         let a = xa;
         let b = xa + xb ;
         let c = xa * (xb + -xc);
 
         let i = 0;
+        let j = 0;
         while (i < 7) {
             let i = i + 1;
             do Output.printInt(i);
+        }
+
+        while (i < 10) {
+            let i = i + 1;
+            do Output.printInt(i);
+            if (i > 8) {
+                do Output.printInt(77);
+            } else {
+                do Output.printInt(88);
+            }
+            while(j<3){
+                if (j=2) {
+                    do Output.printInt(99);
+                }
+                let j = j + 1;
+            }
         }
 
         return this;
