@@ -1,7 +1,3 @@
-function Terms.new 2
-push constant 3
-call Memory.alloc 1
-pop pointer 0
 push argument 0
 pop this 0
 push argument 0

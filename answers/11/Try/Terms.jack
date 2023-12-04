@@ -6,7 +6,8 @@ class Terms {
         let a = xa;
         let b = xa + xb ;
         let c = xa * (xb + -xc);
-
+        let c = xa - xb;
+        
         let i = 0;
         let j = 0;
         while (i < 7) {

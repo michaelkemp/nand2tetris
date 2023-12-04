@@ -1,0 +1,29 @@
+push constant 1
+pop this 0
+push constant 2
+push local 0
+push local 1
+push constant 55
+push constant 81
+push constant 4
+call Math.divide 2
+push this 0
+call Math.multiply 2
+add
+call Math.multiply 2
+add
+push constant 55
+push this 2
+call Math.multiply 2
+call Math.divide 2
+add
+pop this 1
+push argument 0
+push argument 1
+push argument 2
+neg
+add
+call Math.multiply 2
+pop this 2
+push pointer 0
+return

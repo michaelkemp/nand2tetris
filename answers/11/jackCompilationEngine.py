@@ -124,7 +124,7 @@ class CompilationEngine:
             self.compileClassVarDec()
             TYPE, VALUE = self.seeNextToken()
 
-        self.printClassSymbolTable()
+        ## self.printClassSymbolTable()
 
         # expect subroutineDec*
         # subroutineDec: ('constructor'|'function'|'method') ('void'|TYPE) subroutineName '(' parameterList ')' subroutineBody
@@ -142,7 +142,7 @@ class CompilationEngine:
             self.compileSubroutineDec()
             TYPE, VALUE = self.seeNextToken()
 
-            self.printSubroutineSymbolTable()
+            ## self.printSubroutineSymbolTable()
 
         self.eat("symbol", ["}"])
 
@@ -656,7 +656,7 @@ class CompilationEngine:
 
 
     def vmExpression(self, expression):
-        print(expression)
+        #print(expression)
         for exp,typ in expression:
             match typ:
                 case "var":
@@ -691,11 +691,11 @@ class CompilationEngine:
                 case "symbol":
                     match exp:
                         case "+": self.vmCode.append("add")
-                        case "-": self.vmCode.append("neg")
+                        case "-": self.vmCode.append("sub")
                         case "*": self.vmCode.append("call Math.multiply 2")
                         case "/": self.vmCode.append("call Math.divide 2")
-                        case "&": self.vmCode.append("call Math.AND 2")
-                        case "|": self.vmCode.append("call Math.OR 2")
+                        case "&": self.vmCode.append("and")
+                        case "|": self.vmCode.append("or")
                         case "<": self.vmCode.append("lt")
                         case ">": self.vmCode.append("gt")
                         case "=": self.vmCode.append("eq")
@@ -703,5 +703,5 @@ class CompilationEngine:
                 case "unary":
                     match exp:
                         case "m": self.vmCode.append("neg")
-                        case "~": self.vmCode.append("call Math.NOT 1")
+                        case "~": self.vmCode.append("not")
 
