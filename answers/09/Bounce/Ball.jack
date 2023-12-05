@@ -1,0 +1,74 @@
+class Ball {
+
+    field int x, y;
+    field int dx, dy, xdir, ydir;
+    field int radius;
+
+    constructor Ball new(int ax, int ay, int aradius, int adx, int ady) {
+        let x = ax;
+        let y = ay;
+        let dx = adx;
+        let dy = ady;
+        let xdir = 1;
+        let ydir = 1;
+        let radius = aradius;
+        do Screen.setColor(true);
+        do draw();
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+    method int getDx() {
+        return dx;
+    }
+    method int getDy() {
+        return dy;
+    }
+    method void upX() {
+        let dx = dx + 1;
+        return;
+    }
+    method void downX() {
+        if (dx > 0) {
+            let dx = dx - 1;
+        }
+        return;
+    }
+    method void upY() {
+        let dy = dy + 1;
+        return;
+    }
+    method void downY() {
+        if (dy > 0) {
+            let dy = dy - 1;
+        }
+        return;
+    }
+
+    method void draw() {
+        do Screen.clearScreen();
+        do Screen.drawCircle(x, y, radius);
+        return;
+    }
+
+    method void move() {
+        var int tmp;
+        let tmp = y + (dy*ydir);
+        if ((tmp > radius) & (tmp < (256 - radius))) {
+            let y = y + (dy*ydir);
+        } else {
+            let ydir = ydir * -1;
+        }
+        let tmp = x + (dx*xdir);
+        if ((tmp > radius) & (tmp < (512 - radius))) {
+            let x = x + (dx*xdir);
+        } else {
+            let xdir = xdir * -1;
+        }
+        return;
+    }
+
+}

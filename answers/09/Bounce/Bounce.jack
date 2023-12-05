@@ -1,0 +1,60 @@
+
+class Bounce {
+   field Ball ball;
+
+   constructor Bounce new() {
+      let ball = Ball.new(256, 128, 10, 1, 2);
+      return this;
+   }
+
+   method void dispose() {
+      do ball.dispose();
+      do Memory.deAlloc(this);
+      return;
+   }
+
+
+   method void run() {
+      var char key;  
+      var boolean exit, multi;
+      var int cdx, cdy;
+      let exit = false;
+      
+      while (~exit) {
+         let key = Keyboard.keyPressed();
+         if (key = 0) {
+            let multi = false;
+         }
+
+         if ((key > 0) & (~multi)) {
+            let multi = true;
+            if (key = 81)  { let exit = true; }     // q key
+            if (key = 131) { do ball.upY(); }       // up arrow
+            if (key = 133) { do ball.downY(); }     // down arrow
+            if (key = 130) { do ball.downX(); }     // left arrow
+            if (key = 132) { do ball.upX(); }       // right arrow
+         }
+
+
+         do ball.move();
+         do ball.draw();
+         let cdx = ball.getDx();
+         let cdy = ball.getDy();
+         if (cdx < 0){
+            do Output.moveCursor(1, 4);
+         } else {
+            do Output.moveCursor(1, 5);
+         }
+         do Output.printInt(cdx);
+         if (cdy < 0) {
+            do Output.moveCursor(3, 4);
+         } else {
+            do Output.moveCursor(3, 5);
+         }
+         do Output.printInt(cdy);
+         do Sys.wait(25);
+         
+     } 
+     return;
+   }
+}
