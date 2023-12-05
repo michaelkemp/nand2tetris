@@ -10,6 +10,7 @@ class CompilationEngine:
         self.subroutineSymbolTable = []
         self.currentClassName = ""
         self.currentSubroutineName = ""
+        self.currentSubroutineReturn = ""
         self.currentSubroutineType = ""
         self.fieldCnt = 0
         self.staticCnt = 0
@@ -134,6 +135,7 @@ class CompilationEngine:
             ## GEN -- SUBROUTINE NAME
             self.subroutineSymbolTable = []
             self.currentSubroutineName = ""
+            self.currentSubroutineReturn = ""
             self.currentSubroutineType = ""
             self.argumentCnt = 0
             self.localCnt = 0
@@ -203,6 +205,11 @@ class CompilationEngine:
         ## GEN -- /SUBROUTINE TYPE
 
         self.eat("keyword",["constructor","function","method"])
+
+        ## GEN -- SUBROUTINE RETURN
+        self.currentSubroutineReturn = self.valNextToken()
+        ## GEN -- /SUBROUTINE RETURN
+
         self.eatType(True) ## include Void in Type
 
         ## GEN -- SUBROUTINE NAME
@@ -267,6 +274,24 @@ class CompilationEngine:
         while TYPE == "keyword" and VALUE == "var":
             self.compileVarDec()
             TYPE, VALUE = self.seeNextToken()
+
+        ######## SUBROUTINES ########
+        #print(self.currentSubroutineType, self.currentSubroutineReturn, self.currentSubroutineName, self.subroutineSymbolTable)
+
+        match self.currentSubroutineType:
+            case "constructor":
+                self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
+                self.vmCode.append(f"push constant {self.argumentCnt}")
+                self.vmCode.append("call Memory.alloc 1")
+                self.vmCode.append("pop pointer 0")
+            case "method":
+                self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
+                self.vmCode.append(f"push constant {self.argumentCnt}")
+                self.vmCode.append("call Memory.alloc 1")
+                self.vmCode.append("pop pointer 0")
+            case "function":
+                self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
+                #self.vmCode.append("push argument 0")
 
         self.compileStatements()
         self.eat("symbol", ["}"])
@@ -363,15 +388,19 @@ class CompilationEngine:
         ## GEN -- EXPRESSION
         parsedExpression = rawExpression.getExp()
         self.vmExpression(parsedExpression)
+        notFound = True
         for symbols in self.subroutineSymbolTable:
-            if identifier["value"] == symbols["name"]:
+            if notFound and identifier["value"] == symbols["name"]:
                 self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
+                notFound = False
         for symbols in self.classSymbolTable:
-            if identifier["value"] == symbols["name"]:
+            if notFound and identifier["value"] == symbols["name"]:
                 if (symbols["kind"] == "field"):    
                     self.vmCode.append(f"pop this {symbols['num']}")
+                    notFound = False
                 else:
                     self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
+                    notFound = False
         ## GEN -- /EXPRESSION
 
         self.eat("symbol",[";"])
@@ -663,12 +692,12 @@ class CompilationEngine:
                     for symbols in self.subroutineSymbolTable:
                         if exp == symbols["name"]:
                             self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
-                    for symbols in self.classSymbolTable:
-                        if exp == symbols["name"]:
-                            if (symbols["kind"] == "field"):    
-                                self.vmCode.append(f"push this {symbols['num']}")
-                            else:
-                                self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
+                    # for symbols in self.classSymbolTable:
+                    #     if exp == symbols["name"]:
+                    #         if (symbols["kind"] == "field"):    
+                    #             self.vmCode.append(f"push this {symbols['num']}")
+                    #         else:
+                    #             self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
 
                 case "keyword":
                     match exp:
