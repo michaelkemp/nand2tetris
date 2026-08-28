@@ -666,21 +666,68 @@ class CompilationEngine:
 
 
     ## subroutineCall: subroutineName '(' expressionList ')' | (className|varName)'.'subroutineName '(' expressionList ')'
+    ##
+    ## Three cases, per the Jack spec:
+    ##   subroutineName(...)        -- always a method call on `this`
+    ##   varName.subroutineName(...) -- a method call on a known object;
+    ##                                  varName's declared TYPE gives the class
+    ##   className.subroutineName(...) -- a plain function/constructor call
+    ## Method calls need the receiver object pushed as an implicit first
+    ## argument. Rather than special-case that in vmExpression, prepend a
+    ## synthetic argument expression that pushes the receiver - the existing
+    ## expList-length-as-argument-count machinery then does the right thing
+    ## automatically.
     def compileSubroutineCall(self, eatName, fullName, parent):
 
         if eatName:
             self.eat("identifier")
 
+        firstName = fullName.split(".")[0]
+        methodName = None
+
         TYPE, VALUE = self.seeNextToken()
         if TYPE == "symbol" and VALUE == ".":
             self.eat("symbol",["."])
+            methodName = self.valNextToken()
             self.eat("identifier")
-        
+
         # '(' expressionList ')'
-        self.eat("symbol",["("])    
+        self.eat("symbol",["("])
         expList = self.compileExpressionList()
-        self.eat("symbol",[")"]) 
-        parent.addTerm(fullName, "call", expList)   
+        self.eat("symbol",[")"])
+
+        if methodName is None:
+            ## bare call: always a method call on this class's own `this`
+            callName = f"{self.currentClassName}.{firstName}"
+            receiver = jackExpressions.Expressions()
+            receiver.addTerm("this", "keyword")
+            expList = [receiver] + expList
+        else:
+            varType = self.lookupVarType(firstName)
+            if varType is not None:
+                ## varName.method(...): a method call on a known object
+                callName = f"{varType}.{methodName}"
+                receiver = jackExpressions.Expressions()
+                receiver.addTerm(firstName, "var")
+                expList = [receiver] + expList
+            else:
+                ## className.function(...) / className.new(...): no receiver
+                callName = f"{firstName}.{methodName}"
+
+        parent.addTerm(callName, "call", expList)
+
+
+    ## Looks up a varName's declared TYPE (e.g. "Ball"), or None if name
+    ## isn't a declared variable at all - used to tell a method call
+    ## (varName.method()) apart from a plain function call (className.function()).
+    def lookupVarType(self, name):
+        for symbols in self.subroutineSymbolTable:
+            if name == symbols["name"]:
+                return symbols["type"]
+        for symbols in self.classSymbolTable:
+            if name == symbols["name"]:
+                return symbols["type"]
+        return None
 
 
     ## Looks up a varName in the subroutine table first (locals/arguments
