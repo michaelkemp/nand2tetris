@@ -139,6 +139,8 @@ class CompilationEngine:
             self.currentSubroutineType = ""
             self.argumentCnt = 0
             self.localCnt = 0
+            self.IF = 0
+            self.WHILE = 0
             ## GEN -- /SUBROUTINE NAME
 
             self.compileSubroutineDec()
@@ -787,8 +789,8 @@ class CompilationEngine:
                 case "keyword":
                     match exp:
                         case "true":
-                            self.vmCode.append("push constant 1")
-                            self.vmCode.append("neg")
+                            self.vmCode.append("push constant 0")
+                            self.vmCode.append("not")
                         case "false":
                             self.vmCode.append("push constant 0")
                         case "null":
