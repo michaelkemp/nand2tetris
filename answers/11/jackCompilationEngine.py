@@ -286,8 +286,7 @@ class CompilationEngine:
                 self.vmCode.append("pop pointer 0")
             case "method":
                 self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
-                self.vmCode.append(f"push constant {self.argumentCnt}")
-                self.vmCode.append("call Memory.alloc 1")
+                self.vmCode.append("push argument 0")
                 self.vmCode.append("pop pointer 0")
             case "function":
                 self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
