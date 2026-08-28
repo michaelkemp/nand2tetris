@@ -23,7 +23,9 @@ class Expressions:
             if exp["child"]:
                 for chexp in exp["child"]:
                     flat = chexp.flattenExp(flat)
-            flat.append([exp["data"],exp["type"]])
+            ## nChild carries the argument count through for "call" terms,
+            ## which flattenExp would otherwise discard before it reaches codegen
+            flat.append([exp["data"],exp["type"],len(exp["child"])])
         return flat
     
     def parseExp(self):
@@ -50,19 +52,40 @@ class Expressions:
                     chexp.printExpression(exp["data"], count+5)
 
     def shuntingYard(self):
+        ## Jack's grammar (expression: term (op term)*) has no operator
+        ## precedence at all -- every binary op is equal precedence and
+        ## strictly left-to-right. All binary ops share one tier here to
+        ## match that; unary '~'/'m' still need to bind tighter than any
+        ## binary op (so "-x + y" means "(-x) + y", not "-(x+y)").
         operators = {
-            '|': [2, "L"], 
-            '&': [3, "L"], 
-            '=': [4, "L"],
-            '<': [5, "L"], 
-            '>': [5, "L"], 
-            '+': [6, "L"], 
-            '-': [6, "L"], 
-            '*': [7, "L"], 
-            '/': [7, "L"], 
-            '~': [8, "R"], ## UNARY NOT
-            'm': [8, "R"]  ## UNARY MINUS
+            '|': [1, "L"],
+            '&': [1, "L"],
+            '=': [1, "L"],
+            '<': [1, "L"],
+            '>': [1, "L"],
+            '+': [1, "L"],
+            '-': [1, "L"],
+            '*': [1, "L"],
+            '/': [1, "L"],
+            '~': [2, "R"], ## UNARY NOT
+            'm': [2, "R"]  ## UNARY MINUS
             }
+        ## PEMDAS-style precedence (NOT spec-correct for Jack -- every
+        ## binary op is actually equal precedence per grammar.txt -- kept
+        ## here in case we ever want real C-like precedence instead):
+        # operators = {
+        #     '|': [2, "L"],
+        #     '&': [3, "L"],
+        #     '=': [4, "L"],
+        #     '<': [5, "L"],
+        #     '>': [5, "L"],
+        #     '+': [6, "L"],
+        #     '-': [6, "L"],
+        #     '*': [7, "L"],
+        #     '/': [7, "L"],
+        #     '~': [8, "R"], ## UNARY NOT
+        #     'm': [8, "R"]  ## UNARY MINUS
+        #     }
 
         outputQueue = []
         operatorStack = []

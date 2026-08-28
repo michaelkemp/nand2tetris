@@ -20,7 +20,7 @@ call Function.triple 1
 push constant 5
 push constant 3
 call Math.multiply 2
-call Function.power 1
+call Function.power 2
 call Math.multiply 2
 pop this 2
 push pointer 0

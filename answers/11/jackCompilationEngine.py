@@ -684,20 +684,34 @@ class CompilationEngine:
         parent.addTerm(fullName, "call", expList)   
 
 
+    ## Looks up a varName in the subroutine table first (locals/arguments
+    ## shadow fields/statics), then the class table, returning the VM
+    ## "segment index" text to push/pop it (fields are addressed via "this").
+    def lookupVar(self, name):
+        for symbols in self.subroutineSymbolTable:
+            if name == symbols["name"]:
+                return f"{symbols['kind']} {symbols['num']}"
+        for symbols in self.classSymbolTable:
+            if name == symbols["name"]:
+                if symbols["kind"] == "field":
+                    return f"this {symbols['num']}"
+                else:
+                    return f"{symbols['kind']} {symbols['num']}"
+        raise NameError(f"Undeclared variable: {name}")
+
+
     def vmExpression(self, expression):
         #print(expression)
-        for exp,typ in expression:
+        for exp,typ,nChild in expression:
             match typ:
                 case "var":
-                    for symbols in self.subroutineSymbolTable:
-                        if exp == symbols["name"]:
-                            self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
-                    # for symbols in self.classSymbolTable:
-                    #     if exp == symbols["name"]:
-                    #         if (symbols["kind"] == "field"):    
-                    #             self.vmCode.append(f"push this {symbols['num']}")
-                    #         else:
-                    #             self.vmCode.append(f"push {symbols['kind']} {symbols['num']}")
+                    self.vmCode.append(f"push {self.lookupVar(exp)}")
+
+                case "array":
+                    self.vmCode.append(f"push {self.lookupVar(exp)}")
+                    self.vmCode.append("add")
+                    self.vmCode.append("pop pointer 1")
+                    self.vmCode.append("push that 0")
 
                 case "keyword":
                     match exp:
@@ -715,7 +729,7 @@ class CompilationEngine:
                     self.vmCode.append(f"push constant {exp}")
 
                 case "call":
-                    self.vmCode.append(f"call {exp} 1")
+                    self.vmCode.append(f"call {exp} {nChild}")
 
                 case "symbol":
                     match exp:
