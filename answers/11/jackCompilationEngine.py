@@ -281,7 +281,7 @@ class CompilationEngine:
         match self.currentSubroutineType:
             case "constructor":
                 self.vmCode.append(f"function {self.currentClassName}.{self.currentSubroutineName} {self.localCnt}")
-                self.vmCode.append(f"push constant {self.argumentCnt}")
+                self.vmCode.append(f"push constant {self.fieldCnt}")
                 self.vmCode.append("call Memory.alloc 1")
                 self.vmCode.append("pop pointer 0")
             case "method":
