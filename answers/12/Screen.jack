@@ -13,7 +13,13 @@ class Screen {
     static boolean color;
     static Array twoToThe; // private bit-mask table, same idea as Math's - built
                            // here rather than reusing Math's since that one's
-                           // private to Math and not part of its public API
+                           // private to Math and not part of its public API.
+                           // Sized 17, not 16: twoToThe[16] is deliberately let
+                           // overflow to 0 (doubling twoToThe[15] = -32768 wraps
+                           // to 0 in 16-bit two's complement), so that
+                           // drawHorizontal's "bits 0..15 set" mask
+                           // (twoToThe[endBit+1]-1) comes out to -1 even when
+                           // endBit is the last bit (15), with no special case.
     static int screenBase, maxX, maxY; // reused across every drawXXX function,
                                         // so named once here rather than
                                         // repeating the literals at each site
@@ -25,10 +31,10 @@ class Screen {
         let screenBase = 16384;
         let maxX = 511;
         let maxY = 255;
-        let twoToThe = Array.new(16);
+        let twoToThe = Array.new(17);
         let twoToThe[0] = 1;
         let i = 1;
-        while (i < 16) {
+        while (i < 17) {
             let twoToThe[i] = twoToThe[i - 1] + twoToThe[i - 1];
             let i = i + 1;
         }
@@ -73,8 +79,119 @@ class Screen {
         return;
     }
 
+    /** Sets or clears (per the current color) exactly the bits marked in
+     *  mask at the given screen word address. Shared by drawPixel's
+     *  wider sibling, drawHorizontal, so the peek/bitop/poke sequence
+     *  only has to be written once. */
+    function void updateLocation(int address, int mask) {
+        var int value;
+        let value = Memory.peek(address);
+        if (color) {
+            let value = value | mask;
+        } else {
+            let value = value & (~mask);
+        }
+        do Memory.poke(address, value);
+        return;
+    }
+
+    /** Draws a horizontal run of pixels from x=xa to x=xb (in either
+     *  order) on row y, using the current color. Unlike calling
+     *  drawPixel in a loop - which recomputes 32*y and x/16 from
+     *  scratch for every single pixel via Math.multiply/Math.divide -
+     *  this computes the row's base address and the two edge bit-masks
+     *  ONCE, then fills whole 16-bit words at a time in between. Verified
+     *  against the official reference OS's own Screen.drawHorizontal,
+     *  which uses this same word-batching strategy (see Screen.md). */
+    function void drawHorizontal(int y, int xa, int xb) {
+        var int left, right, startWord, endWord, startBit, endBit;
+        var int leftMask, rightMask, rowBase, word, lastWord;
+
+        let left = Math.min(xa, xb);
+        let right = Math.max(xa, xb);
+        let startWord = left / 16;
+        let startBit = left - (startWord * 16);
+        let endWord = right / 16;
+        let endBit = right - (endWord * 16);
+        let leftMask = ~(twoToThe[startBit] - 1);   // bits startBit..15 set
+        let rightMask = twoToThe[endBit + 1] - 1;   // bits 0..endBit set
+        let rowBase = screenBase + (32 * y) + startWord;
+
+        if (startWord = endWord) {
+            do Screen.updateLocation(rowBase, leftMask & rightMask);
+            return;
+        }
+
+        do Screen.updateLocation(rowBase, leftMask);
+        let lastWord = rowBase + (endWord - startWord);
+        let word = rowBase + 1;
+        while (word < lastWord) {
+            do Screen.updateLocation(word, -1);
+            let word = word + 1;
+        }
+        do Screen.updateLocation(lastWord, rightMask);
+        return;
+    }
+
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        // slides 81-86. The documented algorithm assumes dx>=0 and dy>=0
+        // ("focus on lines that go north-east") - tracing it through shows
+        // it actually breaks for dx=0 or dy=0 specifically: diff starts at
+        // 0, and the first tie-break always takes the b++ branch, which
+        // immediately exceeds a 0 bound on dy and cuts a horizontal line
+        // off after one pixel. So those two are handled as straight-line
+        // special cases below; the general loop covers every other
+        // direction by walking absolute dx/dy and applying the sign
+        // (xStep/yStep) only when computing the actual pixel to draw.
+        var int dx, dy, absDx, absDy, xStep, yStep, a, b, diff;
+
+        if ((x1 < 0) | (x1 > maxX) | (y1 < 0) | (y1 > maxY) |
+            (x2 < 0) | (x2 > maxX) | (y2 < 0) | (y2 > maxY)) {
+            do Sys.error(8);
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        if (dx = 0) {
+            if (dy < 0) { let yStep = -1; } else { let yStep = 1; }
+            let b = 0;
+            let absDy = Math.abs(dy);
+            while (~(b > absDy)) {
+                do Screen.drawPixel(x1, y1 + (b * yStep));
+                let b = b + 1;
+            }
+            return;
+        }
+
+        if (dy = 0) {
+            // word-batched fill (see drawHorizontal) rather than a
+            // per-pixel drawPixel loop, since every pixel here shares
+            // the same row - no need to recompute 32*y per pixel
+            do Screen.drawHorizontal(y1, x1, x2);
+            return;
+        }
+
+        if (dx < 0) { let xStep = -1; } else { let xStep = 1; }
+        if (dy < 0) { let yStep = -1; } else { let yStep = 1; }
+        let absDx = Math.abs(dx);
+        let absDy = Math.abs(dy);
+
+        let a = 0;
+        let b = 0;
+        let diff = 0;
+        while ((~(a > absDx)) & (~(b > absDy))) {
+            do Screen.drawPixel(x1 + (a * xStep), y1 + (b * yStep));
+            if (diff < 0) {
+                let a = a + 1;
+                let diff = diff + absDy;
+            } else {
+                let b = b + 1;
+                let diff = diff - absDx;
+            }
+        }
+        return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
@@ -84,5 +201,32 @@ class Screen {
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        // slide 95: for each dy = -r..r, fill the horizontal chord at that
+        // row from x-sqrt(r^2-dy^2) to x+sqrt(r^2-dy^2). Optimized to only
+        // compute sqrt for dy = 0..r and reuse it for both y+dy and y-dy,
+        // since sqrt(r^2-dy^2) == sqrt(r^2-(-dy)^2) - same pixels, half the
+        // (non-trivial) Math.sqrt calls. r<=181 keeps r*r from overflowing
+        // 16 bits; this is a documented precondition, not validated here,
+        // matching the reference (which doesn't check it either).
+        var int dy, halfWidth, rSquared;
+
+        if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
+            do Sys.error(12);
+        }
+        if (((x - r) < 0) | ((x + r) > maxX) | ((y - r) < 0) | ((y + r) > maxY)) {
+            do Sys.error(13);
+        }
+
+        let rSquared = r * r;
+        let dy = 0;
+        while (~(dy > r)) {
+            let halfWidth = Math.sqrt(rSquared - (dy * dy));
+            do Screen.drawLine(x - halfWidth, y + dy, x + halfWidth, y + dy);
+            if (dy > 0) {
+                do Screen.drawLine(x - halfWidth, y - dy, x + halfWidth, y - dy);
+            }
+            let dy = dy + 1;
+        }
+        return;
     }
 }
