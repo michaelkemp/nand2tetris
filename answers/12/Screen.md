@@ -19,11 +19,34 @@ built on that one formula.
 - `screenBase`, `maxX`, `maxY` — named once here instead of repeating the
   literals (`16384`, `511`, `255`) at every call site.
 
+## `clearScreen()`
+
+Always clears to white (`0`), **regardless of the current color** — it
+doesn't check `color` at all, it just pokes literal `0` to every one of
+the 8192 words that make up the screen. Confirmed this is the intended
+behavior, not an oversight: the official reference OS's own `clearScreen`
+does exactly the same thing (read directly from `tools/OS/Screen.vm` — no
+check against its color flag anywhere in the function). So `setColor(true)`
+followed by `clearScreen()` still gives a white screen.
+
+This already operates at word granularity, not pixel granularity — its
+loop index walks the 8192 word offsets directly (`screenBase + i`), one
+`Memory.poke` per full 16-bit word, same as the reference. There's no
+bulk-memory primitive in Jack to do better than one `poke` per word.
+
 ## `drawPixel(x, y)` — slide 69
 
-The direct formula: compute the word address, read it, set or clear bit
-`x mod 16` (via `twoToThe[bit]`, `~twoToThe[bit]`), write it back. No mod
-operator in Jack, so `x mod 16` is `x - (x/16)*16`.
+The direct formula: compute the word offset (`x/16`), read that word, set
+or clear bit `x mod 16` of it (via `twoToThe[bit]`), write it back through
+`updateLocation`. No mod operator in Jack, so `x mod 16` is
+`x - (x/16)*16`.
+
+An earlier version of this computed `x/16` **twice** — once inline for the
+address, once inline for the bit index — a pure duplicate `Math.divide`
+call for the same value. Fixed to compute it once into a local and reuse
+it for both, matching the official reference's own `drawPixel` exactly
+(confirmed by reading `tools/OS/Screen.vm`: it computes the divide into a
+local once too, then reuses it the same way).
 
 ## `updateLocation(address, mask)` / `drawHorizontal(y, xa, xb)`
 
@@ -84,9 +107,14 @@ and the first tie-break always takes the "increment b" branch, which
 immediately exceeds a `0` bound on `dy` and cuts a horizontal line off
 after one pixel. So those two directions are handled as special cases:
 
-- **`dx = 0`** (vertical line): still a per-pixel `drawPixel` loop — each
-  pixel is a different word (a different row entirely), so there's nothing
-  to batch here the way `drawHorizontal` batches a row.
+- **`dx = 0`** (vertical line): each pixel is a different word (a
+  different row entirely), so there's no run of pixels to batch into
+  fewer memory writes the way `drawHorizontal` does. There *is* still
+  waste worth removing, though: `x` is the same for every pixel down the
+  column, so its word-offset and bit-mask are computed **once** up front
+  (instead of via a fresh `drawPixel` call — and its `Math.divide` — every
+  single row), and the loop just steps the address by `±32` per row,
+  calling `updateLocation` directly with the precomputed mask.
 - **`dy = 0`** (horizontal line): delegates straight to
   `Screen.drawHorizontal(y1, x1, x2)` instead of looping `drawPixel`.
 - **General diagonal case:** unchanged — walks absolute `dx`/`dy` with a
