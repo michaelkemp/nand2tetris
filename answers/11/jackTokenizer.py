@@ -63,7 +63,7 @@ class Tokenizer:
                     found = True
                 
 
-            # symbols        
+            # symbols
             for sym in self.symbols:
                 if re.search(fr"^\{sym}", self.jack):
                     self.jack = self.jack[1:]
@@ -71,6 +71,7 @@ class Tokenizer:
                     value = sym
                     self.tokens.append({"type":type,"value":value})
                     found = True
+                    break
 
             # integers
             if re.search(r"^\d+", self.jack): ## \d matches unicode decimal digits
