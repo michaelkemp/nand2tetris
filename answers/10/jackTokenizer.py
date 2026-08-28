@@ -27,8 +27,8 @@ class Tokenizer:
                 self.jack = self.jack[1:]
 
             # inline comment
-            if re.search("^//.*", self.jack): ## . matches everything except newline
-                theMatch = re.match("^//.*", self.jack).group(0)
+            if re.search(r"^//.*", self.jack): ## . matches everything except newline
+                theMatch = re.match(r"^//.*", self.jack).group(0)
                 self.jack = self.jack[len(theMatch):]
                 continue
 
@@ -39,8 +39,8 @@ class Tokenizer:
                 continue
 
             # string
-            if re.search('^(")([^\n]*)(")', self.jack):
-                theMatch = re.match('^(")([^\n]*)(")', self.jack).group(0)
+            if re.search(r'^(")([^\n]*)(")', self.jack):
+                theMatch = re.match(r'^(")([^\n]*)(")', self.jack).group(0)
                 self.jack = self.jack[len(theMatch):]
                 type = "stringConstant"
                 value = theMatch.strip('"')
