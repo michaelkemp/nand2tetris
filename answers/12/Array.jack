@@ -15,9 +15,18 @@ class Array {
 
     /** Constructs a new Array of the given size. */
     function Array new(int size) {
+        if (size < 1) {
+            // Placeholder until Sys is implemented (see Math.divide/
+            // Memory.alloc for the same pattern) - error code 2 matches
+            // the official reference OS (verified via tools/OS/Array.vm).
+            do Sys.error(2);
+        }
+        return Memory.alloc(size);
     }
 
     /** Disposes this array. */
     method void dispose() {
+        do Memory.deAlloc(this);
+        return;
     }
 }
