@@ -62,6 +62,32 @@ class Math {
      *  Thus, x/y and Math.divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+        // Divide |x| by |y|, then restore the sign - divideNonNeg only
+        // handles non-negative operands.
+        var boolean negative;
+        var int result;
+        let negative = ((x < 0) & (y > 0)) | ((x > 0) & (y < 0));
+        let result = Math.divideNonNeg(Math.abs(x), Math.abs(y));
+        if (negative) {
+            return -result;
+        }
+        return result;
+    }
+
+    /** Returns x / y for x >= 0, y >= 0. Based on: x/y = 2*((x/2)/y). */
+    function int divideNonNeg(int x, int y) {
+        var int q;
+        // y < 0 here means 2*y overflowed on the way down through the
+        // recursion (y doubles each call) - that's the signal to stop,
+        // exactly as if y had simply grown past x.
+        if ((y > x) | (y < 0)) {
+            return 0;
+        }
+        let q = Math.divideNonNeg(x, y + y);
+        if ((x - ((2 * q) * y)) < y) {
+            return 2 * q;
+        }
+        return (2 * q) + 1;
     }
 
     /** Returns the integer part of the square root of x.
@@ -82,5 +108,9 @@ class Math {
     /** Returns the absolute value of x
     */
     function int abs(int x) {
+        if (x < 0) {
+            return -x;
+        }
+        return x;
     }
 }
