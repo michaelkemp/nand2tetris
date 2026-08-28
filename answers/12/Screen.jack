@@ -62,20 +62,16 @@ class Screen {
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
-        // slide 69: address = 32*y + x/16, then flip the (x mod 16)th bit
-        var int address, value, bit;
+        // address = 32*y + wordOffset, and the pixel is bit (x mod 16) of
+        // that word - wordOffset is computed once and reused for both,
+        // rather than dividing twice for the same value
+        var int wordOffset, bit;
         if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
             do Sys.error(7);
         }
-        let address = screenBase + (32 * y) + (x / 16);
-        let value = Memory.peek(address);
-        let bit = x - ((x / 16) * 16); // x mod 16 - Jack has no mod operator
-        if (color) {
-            let value = value | twoToThe[bit];
-        } else {
-            let value = value & (~twoToThe[bit]);
-        }
-        do Memory.poke(address, value);
+        let wordOffset = x / 16;
+        let bit = x - (wordOffset * 16); // x mod 16 - Jack has no mod operator
+        do Screen.updateLocation(screenBase + (32 * y) + wordOffset, twoToThe[bit]);
         return;
     }
 
@@ -135,16 +131,14 @@ class Screen {
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
-        // slides 81-86. The documented algorithm assumes dx>=0 and dy>=0
-        // ("focus on lines that go north-east") - tracing it through shows
-        // it actually breaks for dx=0 or dy=0 specifically: diff starts at
-        // 0, and the first tie-break always takes the b++ branch, which
-        // immediately exceeds a 0 bound on dy and cuts a horizontal line
-        // off after one pixel. So those two are handled as straight-line
-        // special cases below; the general loop covers every other
-        // direction by walking absolute dx/dy and applying the sign
-        // (xStep/yStep) only when computing the actual pixel to draw.
+        // The general diagonal algorithm below (walking absolute dx/dy
+        // with a running tie-break) breaks down for dx=0 or dy=0
+        // specifically: its tie-break always favors incrementing the
+        // second axis first, which immediately exceeds a 0 bound and
+        // cuts an axis-aligned line off after one pixel. So those two
+        // directions are handled as special cases first.
         var int dx, dy, absDx, absDy, xStep, yStep, a, b, diff;
+        var int wordOffset, bit, mask, address, addressStep;
 
         if ((x1 < 0) | (x1 > maxX) | (y1 < 0) | (y1 > maxY) |
             (x2 < 0) | (x2 > maxX) | (y2 < 0) | (y2 > maxY)) {
@@ -155,20 +149,29 @@ class Screen {
         let dy = y2 - y1;
 
         if (dx = 0) {
-            if (dy < 0) { let yStep = -1; } else { let yStep = 1; }
+            // x is constant down the whole column, so its word-offset
+            // and bit-mask are computed once here rather than every
+            // iteration - each row still needs its own memory write
+            // (unlike a horizontal run, no two rows share a word), but
+            // there's no reason to keep re-deriving the same mask
+            let wordOffset = x1 / 16;
+            let bit = x1 - (wordOffset * 16);
+            let mask = twoToThe[bit];
+            let address = screenBase + (32 * y1) + wordOffset;
+            if (dy < 0) { let addressStep = -32; } else { let addressStep = 32; }
             let b = 0;
             let absDy = Math.abs(dy);
             while (~(b > absDy)) {
-                do Screen.drawPixel(x1, y1 + (b * yStep));
+                do Screen.updateLocation(address, mask);
+                let address = address + addressStep;
                 let b = b + 1;
             }
             return;
         }
 
         if (dy = 0) {
-            // word-batched fill (see drawHorizontal) rather than a
-            // per-pixel drawPixel loop, since every pixel here shares
-            // the same row - no need to recompute 32*y per pixel
+            // every pixel here shares one row - drawHorizontal fills
+            // the whole run word by word instead of pixel by pixel
             do Screen.drawHorizontal(y1, x1, x2);
             return;
         }
@@ -197,13 +200,11 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
-        // Not spelled out on its own slide ("the implementation of the
-        // remaining Screen functions is simple") - every row is exactly
-        // the drawHorizontal case, so just loop y and hand each row
-        // straight to drawHorizontal, skipping drawLine's per-row dx/dy
-        // branching and bounds re-check entirely (bounds are validated
-        // once here instead - error code 9 matches the reference OS,
-        // confirmed by reading tools/OS/Screen.vm directly).
+        // Every row of a filled rectangle is exactly the drawHorizontal
+        // case, so this loops y and hands each row straight to
+        // drawHorizontal, skipping drawLine's per-row dx/dy branching
+        // and bounds re-check entirely - bounds are validated once here
+        // instead, up front.
         var int y;
 
         if ((x1 > x2) | (y1 > y2) | (x1 < 0) | (x2 > maxX) | (y1 < 0) | (y2 > maxY)) {
@@ -220,13 +221,13 @@ class Screen {
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
-        // slide 95: for each dy = -r..r, fill the horizontal chord at that
-        // row from x-sqrt(r^2-dy^2) to x+sqrt(r^2-dy^2). Optimized to only
-        // compute sqrt for dy = 0..r and reuse it for both y+dy and y-dy,
-        // since sqrt(r^2-dy^2) == sqrt(r^2-(-dy)^2) - same pixels, half the
-        // (non-trivial) Math.sqrt calls. r<=181 keeps r*r from overflowing
-        // 16 bits; this is a documented precondition, not validated here,
-        // matching the reference (which doesn't check it either).
+        // For each dy = 0..r, fill the horizontal chord at both y+dy and
+        // y-dy from x-halfWidth to x+halfWidth, where halfWidth =
+        // sqrt(r^2 - dy^2) - reusing one sqrt for both rows, since
+        // sqrt(r^2-dy^2) == sqrt(r^2-(-dy)^2) gives the same pixels either
+        // way. r*r must fit in a 16-bit int, which caps r at 181 - not
+        // checked here, since the screen itself caps any on-screen circle
+        // at a radius well below that anyway (see Screen.md).
         var int dy, halfWidth, rSquared;
 
         if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
