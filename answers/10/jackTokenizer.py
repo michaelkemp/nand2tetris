@@ -23,7 +23,7 @@ class Tokenizer:
             found = False
 
             # whitespace
-            while re.search("^\s", self.jack): ## \s matches unicode whitespace including \t\n\r\f\v
+            while re.search(r"^\s", self.jack): ## \s matches unicode whitespace including \t\n\r\f\v
                 self.jack = self.jack[1:]
 
             # inline comment
@@ -33,8 +33,8 @@ class Tokenizer:
                 continue
 
             # multiline comment
-            if re.search("^/\*[\s\S]*?\*/", self.jack): ## \S matches any NON whitespace character (This is the oposite of \s )
-                theMatch = re.match("^/\*[\s\S]*?\*/", self.jack).group(0) ## *? is the greedy quantifier -- matching as many characters as possible before reaching */
+            if re.search(r"^/\*[\s\S]*?\*/", self.jack): ## \S matches any NON whitespace character (This is the oposite of \s )
+                theMatch = re.match(r"^/\*[\s\S]*?\*/", self.jack).group(0) ## *? is the greedy quantifier -- matching as many characters as possible before reaching */
                 self.jack = self.jack[len(theMatch):]
                 continue
 
@@ -48,8 +48,8 @@ class Tokenizer:
                 found = True
 
             # identifiers and keywords 
-            if re.search("^([_a-zA-Z]{1})([\w]*)", self.jack): ## \w matches unicode word characters including alpha, numeric and underscore
-                theMatch = re.match("^([_a-zA-Z]{1})([\w]*)", self.jack).group(0)
+            if re.search(r"^([_a-zA-Z]{1})([\w]*)", self.jack): ## \w matches unicode word characters including alpha, numeric and underscore
+                theMatch = re.match(r"^([_a-zA-Z]{1})([\w]*)", self.jack).group(0)
                 self.jack = self.jack[len(theMatch):]
                 if theMatch in self.keywords:
                     type = "keyword"
@@ -65,7 +65,7 @@ class Tokenizer:
 
             # symbols        
             for sym in self.symbols:
-                if re.search(f"^\{sym}", self.jack):
+                if re.search(fr"^\{sym}", self.jack):
                     self.jack = self.jack[1:]
                     type = "symbol"
                     value = sym
@@ -73,8 +73,8 @@ class Tokenizer:
                     found = True
 
             # integers
-            if re.search("^\d+", self.jack): ## \d matches unicode decimal digits
-                theMatch = re.match("^\d+", self.jack).group(0)
+            if re.search(r"^\d+", self.jack): ## \d matches unicode decimal digits
+                theMatch = re.match(r"^\d+", self.jack).group(0)
                 self.jack = self.jack[len(theMatch):]
                 type = "integerConstant"
                 value = theMatch
@@ -85,6 +85,6 @@ class Tokenizer:
 
             # error
             if len(self.jack) > 0 and not found:
-                theMatch = re.match("^[\S]+", self.jack).group(0)
+                theMatch = re.match(r"^[\S]+", self.jack).group(0)
                 raise SyntaxError(f"Syntax Error: {theMatch}")
                 
