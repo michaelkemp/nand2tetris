@@ -197,6 +197,25 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        // Not spelled out on its own slide ("the implementation of the
+        // remaining Screen functions is simple") - every row is exactly
+        // the drawHorizontal case, so just loop y and hand each row
+        // straight to drawHorizontal, skipping drawLine's per-row dx/dy
+        // branching and bounds re-check entirely (bounds are validated
+        // once here instead - error code 9 matches the reference OS,
+        // confirmed by reading tools/OS/Screen.vm directly).
+        var int y;
+
+        if ((x1 > x2) | (y1 > y2) | (x1 < 0) | (x2 > maxX) | (y1 < 0) | (y2 > maxY)) {
+            do Sys.error(9);
+        }
+
+        let y = y1;
+        while (~(y > y2)) {
+            do Screen.drawHorizontal(y, x1, x2);
+            let y = y + 1;
+        }
+        return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */

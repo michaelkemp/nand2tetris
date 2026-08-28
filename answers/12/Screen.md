@@ -105,7 +105,23 @@ the reference exactly.
 
 ## `drawRectangle(x1, y1, x2, y2)`
 
-Not yet implemented.
+Not given its own dedicated algorithm in the slides ("the implementation
+of the remaining Screen functions is simple") — every row of a filled
+rectangle is exactly the `drawHorizontal` case, so this just validates the
+corners once, then loops `y` from `y1` to `y2` handing each row straight
+to `Screen.drawHorizontal(y, x1, x2)`. This deliberately bypasses
+`drawLine` entirely (rather than looping `drawLine(x1, y, x2, y)`, which
+would re-run the `dx`/`dy` branching and the full bounds check on every
+single row for no benefit, since every row here is known in advance to be
+horizontal and already validated).
+
+Bounds check — `x1 > x2 | y1 > y2 | x1 < 0 | x2 > maxX | y1 < 0 | y2 >
+maxY` → `Sys.error(9)` — matches the official reference exactly (read
+directly from `tools/OS/Screen.vm`, same six comparisons, same error
+code). Verified at runtime: a valid rectangle draws correctly (word-level
+pixel patterns checked by hand across multiple rows and word boundaries,
+plus a single-word case), and all four invalid-corner variants (`x1>x2`,
+`y1>y2`, `x1<0`, `x2` off-screen) halt via `Sys.error(9)` as expected.
 
 ## `drawCircle(x, y, r)` — slide 95
 
@@ -182,4 +198,10 @@ Same two-part standard as every other OS class:
   mask arithmetic; `drawCircle` exact pixel-row verification for a small
   radius (every row's word checked against `sqrt(r²-dy²)` by hand) and the
   127/128/150 boundary behavior confirmed at runtime against both this
-  implementation and the official reference.
+  implementation and the official reference; `drawRectangle` exercised for
+  a multi-row rectangle spanning several words (pixel patterns checked by
+  hand row by row, including that rows outside it stay untouched), a
+  single-word rectangle, and all four invalid-corner variants correctly
+  halting via `Sys.error(9)`.
+
+This completes every function in `Screen.jack`.
