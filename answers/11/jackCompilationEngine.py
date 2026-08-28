@@ -358,8 +358,10 @@ class CompilationEngine:
         self.eat("identifier")
 
         # ('[' expression ']')?
+        isArray = False
         TYPE, VALUE = self.seeNextToken()
         if TYPE == "symbol" and VALUE == "[":
+            isArray = True
             self.eat("symbol",["["])
 
             ## GEN -- EXPRESSION
@@ -374,7 +376,11 @@ class CompilationEngine:
             ## GEN -- /EXPRESSION
 
             self.eat("symbol",["]"])
-        
+
+            ## GEN -- ARRAY TARGET ADDRESS
+            self.vmCode.append(f"push {self.lookupVar(identifier['value'])}")
+            self.vmCode.append("add")
+            ## GEN -- /ARRAY TARGET ADDRESS
 
         self.eat("symbol",["="])
 
@@ -387,20 +393,31 @@ class CompilationEngine:
         ## GEN -- EXPRESSION
         parsedExpression = rawExpression.getExp()
         self.vmExpression(parsedExpression)
-        notFound = True
-        for symbols in self.subroutineSymbolTable:
-            if notFound and identifier["value"] == symbols["name"]:
-                self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
-                notFound = False
-        for symbols in self.classSymbolTable:
-            if notFound and identifier["value"] == symbols["name"]:
-                if (symbols["kind"] == "field"):    
-                    self.vmCode.append(f"pop this {symbols['num']}")
-                    notFound = False
-                else:
+
+        if isArray:
+            ## GEN -- ARRAY ASSIGN
+            ## stash the value (temp 0) before repointing THAT, since the
+            ## address we just computed would otherwise be clobbered by any
+            ## array access inside the value expression above
+            self.vmCode.append("pop temp 0")
+            self.vmCode.append("pop pointer 1")
+            self.vmCode.append("push temp 0")
+            self.vmCode.append("pop that 0")
+            ## GEN -- /ARRAY ASSIGN
+        else:
+            notFound = True
+            for symbols in self.subroutineSymbolTable:
+                if notFound and identifier["value"] == symbols["name"]:
                     self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
                     notFound = False
-        ## GEN -- /EXPRESSION
+            for symbols in self.classSymbolTable:
+                if notFound and identifier["value"] == symbols["name"]:
+                    if (symbols["kind"] == "field"):
+                        self.vmCode.append(f"pop this {symbols['num']}")
+                        notFound = False
+                    else:
+                        self.vmCode.append(f"pop {symbols['kind']} {symbols['num']}")
+                        notFound = False
 
         self.eat("symbol",[";"])
         
