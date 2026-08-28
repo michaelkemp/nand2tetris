@@ -33,19 +33,35 @@ No loop, no bit manipulation — the "implementation" is really just
 declaring `ram` at address 0 and letting Jack's (deliberately unchecked)
 array semantics do the rest.
 
+**How this bootstraps without circularity:** `ram` (and `heap`, below)
+never go through `Array.new`/`Memory.alloc` at all — `init` just does
+`let ram = 0;`, a plain assignment of a literal to an `Array`-typed
+variable. This is legal specifically because Jack is weakly typed (slide
+48 says so explicitly): every Jack array/object is *always* just a plain
+16-bit address under the hood, so pointing an `Array` variable at a
+hardcoded, already-known address needs no allocation and no call into
+code that doesn't exist yet. `Array.new` itself *does* need `Memory.alloc`
+- but `Memory` bootstrapping itself doesn't need `Array.new`. The
+dependency only runs one direction.
+
 ## The heap: a linked list of free segments
 
 `alloc`/`deAlloc` manage a linked list of free memory blocks starting at
 `freeList` (initially `2048`, the base of the heap — everything below that
 is reserved for the stack and static/global variables, everything from
-`16384` up is the screen/keyboard memory map). Every segment, whether
-currently free or handed out to a caller, has a 2-word header sitting at
-its own base address:
+`16384` up is the screen/keyboard memory map), addressed through a second
+field, `static Array heap;`, based at `2048` - separate from `ram` (based
+at `0`), matching the structure in project-12.pdf slide 60 rather than
+just using `ram` with absolute addresses everywhere (an earlier version of
+this file did the latter; behaviorally identical, since `heap[i]` and
+`ram[2048+i]` are the same RAM cell either way, but this matches the
+documented structure). Every segment, whether currently free or handed out
+to a caller, has a 2-word header sitting at its own base address:
 
 | Offset | Meaning |
 |---|---|
 | `+0` | `length` — usable words in this segment, **not counting its own header** |
-| `+1` | `next` — base address of the next free segment, or `0` for "end of list" |
+| `+1` | `next` — absolute base address of the next free segment, or `0` for "end of list" |
 
 This layout isn't a guess — it was confirmed by reading `tools/OS/Memory.vm`
 (the official pre-built reference OS)'s compiled bytecode directly: its
@@ -54,6 +70,21 @@ then reads `that 1` (offset `+1`) to advance to the next segment. The
 error codes (`5` = invalid size, `6` = heap overflow) were confirmed the
 same way, by finding the literal constant pushed right before each
 `call Sys.error`.
+
+**Why `freeList`/`next` store absolute addresses, not heap-relative
+offsets:** using `0` as "end of list" is only safe if no *real* segment
+can ever legitimately sit at that value. That's true for absolute
+addresses (nothing lives at RAM address `0`) but would **not** be true for
+heap-relative offsets, since the very first segment genuinely sits at
+heap-relative offset `0` — a `next` field storing `0` would then be
+ambiguous between "the first segment" and "nothing." So `freeList` and
+every `next` field hold absolute addresses (≥ 2048), and are converted to
+a heap-relative offset (`address - 2048`) only at the point of indexing
+into `heap[]`. The one exception is the local `previous` variable inside
+`alloc`, which is used *only* for indexing (never stored or compared for
+nullness against a real segment) and uses `-1`, not `0`, as its own "no
+previous yet" sentinel - so it's safe to keep it as a heap-relative offset
+throughout and skip the repeated conversion.
 
 **Worth being upfront about:** the reference OS's actual splitting logic
 goes deeper than was worth reverse-engineering byte-for-byte from raw VM
