@@ -8,6 +8,7 @@ class Translator:
         self.asm = ""
         self.jmpCnt = 0
         self.retCnt = 0
+        self.currentFunction = ""
 
         self.disordat = {'0':'THIS', '1':'THAT'}
         self.segNames = {'local':'LCL', 'argument':'ARG', 'this':'THIS', 'that':'THAT'}
@@ -20,6 +21,7 @@ class Translator:
 
         for pd in self.pathData:
             self.staticName = pd["filePre"]
+            self.currentFunction = pd["filePre"]
             vmPath = pd["vmPath"]
             with open(vmPath) as fp:
                 vm = []
@@ -132,6 +134,9 @@ class Translator:
 
     def branch(self, expression):
         command, label = expression.split(" ")
+        # VM labels are scoped to the function they're declared in, so mangle
+        # with the enclosing function name to avoid collisions across functions/files
+        label = f"{self.currentFunction}${label}"
         tmp = ""
         match command:
             case "label":
@@ -153,7 +158,11 @@ class Translator:
 
     def fnctFunction(self, expression):
         command, functionName, nVars = expression.split(" ")
+        assert command == "function"
         tmp = ""
+
+        # Track the enclosing function so label/goto/if-goto can be scoped to it
+        self.currentFunction = functionName
 
         # (functionName)            // declare LABEL for function entry
         tmp += f"({functionName}),"
@@ -167,6 +176,7 @@ class Translator:
 
     def fnctCall(self, expression):
         command, functionName, nArgs = expression.split(" ")
+        assert command == "call"
         tmp = ""
 
         retAdr = functionName + "$ret." + str(self.retCnt)
@@ -454,7 +464,7 @@ class Translator:
         tmp += "@SP,M=M-1,"
 
         # THIS/THAT = *SP
-        tmp += f"@SP,A=M,M=D,@{self.disordat[variable]},M=D,"
+        tmp += f"@SP,A=M,D=M,@{self.disordat[variable]},M=D,"
 
         return tmp.replace(",","\n")
 

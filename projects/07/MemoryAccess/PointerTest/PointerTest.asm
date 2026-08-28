@@ -13,7 +13,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THIS
 M=D
 
@@ -31,7 +31,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 

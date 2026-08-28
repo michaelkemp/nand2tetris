@@ -20,7 +20,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 
@@ -133,7 +133,7 @@ A=M
 M=D
 
 // label LOOP
-(LOOP)
+(FibonacciSeries$LOOP)
 
 // push argument 0
 @ARG
@@ -157,15 +157,15 @@ M=M-1
 @SP
 A=M
 D=M
-@COMPUTE_ELEMENT
+@FibonacciSeries$COMPUTE_ELEMENT
 D;JNE
 
 // goto END
-@END
+@FibonacciSeries$END
 0;JMP
 
 // label COMPUTE_ELEMENT
-(COMPUTE_ELEMENT)
+(FibonacciSeries$COMPUTE_ELEMENT)
 
 // push that 0
 @THAT
@@ -272,7 +272,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 
@@ -335,8 +335,8 @@ A=M
 M=D
 
 // goto LOOP
-@LOOP
+@FibonacciSeries$LOOP
 0;JMP
 
 // label END
-(END)
+(FibonacciSeries$END)

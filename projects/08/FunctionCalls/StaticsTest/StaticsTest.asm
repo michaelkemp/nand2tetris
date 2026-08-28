@@ -770,8 +770,8 @@ M=D
 (Class2.get$ret.4)
 
 // label END
-(END)
+(Sys.init$END)
 
 // goto END
-@END
+@Sys.init$END
 0;JMP

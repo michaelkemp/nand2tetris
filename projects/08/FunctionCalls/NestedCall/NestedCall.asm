@@ -71,7 +71,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THIS
 M=D
 
@@ -89,7 +89,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 
@@ -160,10 +160,10 @@ A=M
 M=D
 
 // label LOOP
-(LOOP)
+(Sys.init$LOOP)
 
 // goto LOOP
-@LOOP
+@Sys.init$LOOP
 0;JMP
 
 // function Sys.main 5
@@ -218,7 +218,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THIS
 M=D
 
@@ -236,7 +236,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 
@@ -616,7 +616,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THIS
 M=D
 
@@ -634,7 +634,7 @@ M=M+1
 M=M-1
 @SP
 A=M
-M=D
+D=M
 @THAT
 M=D
 
