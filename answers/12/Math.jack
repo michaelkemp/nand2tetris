@@ -100,6 +100,23 @@ class Math {
     /** Returns the integer part of the square root of x.
     */
     function int sqrt(int x) {
+        // Binary search for the largest y such that y*y <= x, one bit of
+        // y at a time from the top (j = n/2-1) down to 0 - y only ever
+        // needs n/2 bits since y*y must fit in n bits.
+        var int y, j, approx, approxSquared;
+        let y = 0;
+        let j = (n / 2) - 1;
+        while (~(j < 0)) {
+            let approx = y + powersOfTwo[j];
+            let approxSquared = approx * approx;
+            // approxSquared > 0 guards against approx*approx overflowing
+            // and wrapping negative, which would otherwise look <= x
+            if ((approxSquared > 0) & ~(approxSquared > x)) {
+                let y = approx;
+            }
+            let j = j - 1;
+        }
+        return y;
     }
 
     /** Returns the greater value.
