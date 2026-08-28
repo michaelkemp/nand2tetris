@@ -9,26 +9,84 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
+    static Array ram;
+    // The heap is a linked list of free segments starting at freeList.
+    // Each segment's 2-word header sits at its own base address:
+    //   offset+0 = length (usable words in this segment, not counting the header)
+    //   offset+1 = next   (base address of the next free segment, or 0 = end of list)
+    // Verified against tools/OS/Memory.vm rather than assumed.
+    static int freeList;
 
     /** Initializes the class. */
     function void init() {
+        let ram = 0;
+        let freeList = 2048;
+        let ram[2048] = 14334; // 16384 - 2048 - 2: the whole heap, minus this header
+        let ram[2049] = 0;     // next = null, only one segment exists yet
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+        var int segment, previous, block;
+        if (size < 1) {
+            do Sys.error(5);
+        }
+        let previous = -1; // -1 means "segment is the head of freeList"
+        let segment = freeList;
+        while (~(segment = 0)) {
+            if (~(ram[segment] < size)) {
+                // first fit: this segment has room
+                if (ram[segment] > (size + 1)) {
+                    // enough surplus to also carve a valid header for what's
+                    // left - shrink this segment in place, carve the new
+                    // block from its tail, leave it linked where it was
+                    let ram[segment] = ram[segment] - size - 2;
+                    let block = segment + 2 + ram[segment];
+                } else {
+                    // not enough surplus to split - hand over the whole
+                    // segment and unlink it from the list
+                    let block = segment;
+                    if (previous = -1) {
+                        let freeList = ram[segment + 1];
+                    } else {
+                        let ram[previous + 1] = ram[segment + 1];
+                    }
+                }
+                let ram[block] = size;
+                return block + 2;
+            }
+            let previous = segment;
+            let segment = ram[segment + 1];
+        }
+        // Placeholder until Sys is implemented: matches the reference OS's
+        // own error code (6 = heap overflow), but Sys.error is still an
+        // empty stub, so this is a no-op right now, not an actual halt.
+        do Sys.error(6);
+        return 0;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
-    }    
+        var int block;
+        // o's length field (offset+0) is already correct - alloc set it
+        // when this block was carved out, and nothing since has touched it
+        let block = o - 2;
+        let ram[block + 1] = freeList;
+        let freeList = block;
+        return;
+    }
 }
