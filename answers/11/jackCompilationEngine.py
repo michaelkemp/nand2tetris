@@ -565,10 +565,18 @@ class CompilationEngine:
 
         match TYPE:
 
-            # integerConstant | stringConstant
-            case "integerConstant" | "stringConstant":
+            # integerConstant
+            case "integerConstant":
                 ## GEN -- TERM
                 parent.addTerm(self.valNextToken(),"constant")
+                ## GEN -- /TERM
+
+                self.eat(TYPE)
+
+            # stringConstant
+            case "stringConstant":
+                ## GEN -- TERM
+                parent.addTerm(self.valNextToken(),"string")
                 ## GEN -- /TERM
 
                 self.eat(TYPE)
@@ -790,6 +798,16 @@ class CompilationEngine:
 
                 case "constant":
                     self.vmCode.append(f"push constant {exp}")
+
+                case "string":
+                    ## a Jack string is a String object built one char at a
+                    ## time - the object reference String.appendChar returns
+                    ## is left on the stack, so chained calls need no re-push
+                    self.vmCode.append(f"push constant {len(exp)}")
+                    self.vmCode.append("call String.new 1")
+                    for ch in exp:
+                        self.vmCode.append(f"push constant {ord(ch)}")
+                        self.vmCode.append("call String.appendChar 2")
 
                 case "call":
                     self.vmCode.append(f"call {exp} {nChild}")
