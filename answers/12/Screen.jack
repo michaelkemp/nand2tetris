@@ -14,11 +14,17 @@ class Screen {
     static Array twoToThe; // private bit-mask table, same idea as Math's - built
                            // here rather than reusing Math's since that one's
                            // private to Math and not part of its public API
+    static int screenBase, maxX, maxY; // reused across every drawXXX function,
+                                        // so named once here rather than
+                                        // repeating the literals at each site
 
     /** Initializes the Screen. */
     function void init() {
         var int i;
         let color = true;
+        let screenBase = 16384;
+        let maxX = 511;
+        let maxY = 255;
         let twoToThe = Array.new(16);
         let twoToThe[0] = 1;
         let i = 1;
@@ -35,7 +41,7 @@ class Screen {
         let i = 0;
         // 8192 = 512*256/16: total 16-bit words in the screen memory map
         while (i < 8192) {
-            do Memory.poke(16384 + i, 0);
+            do Memory.poke(screenBase + i, 0);
             let i = i + 1;
         }
         return;
@@ -52,10 +58,10 @@ class Screen {
     function void drawPixel(int x, int y) {
         // slide 69: address = 32*y + x/16, then flip the (x mod 16)th bit
         var int address, value, bit;
-        if ((x < 0) | (x > 511) | (y < 0) | (y > 255)) {
+        if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
             do Sys.error(7);
         }
-        let address = 16384 + (32 * y) + (x / 16);
+        let address = screenBase + (32 * y) + (x / 16);
         let value = Memory.peek(address);
         let bit = x - ((x / 16) * 16); // x mod 16 - Jack has no mod operator
         if (color) {
