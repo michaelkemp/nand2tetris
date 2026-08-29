@@ -224,13 +224,11 @@ class Output {
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
-        // 128/129 are the Hack character set's non-printable newline and
-        // backspace codes - every other code gets its glyph drawn
-        if (c = 128) {
+        if (c = String.newLine()) {
             do Output.println();
             return;
         }
-        if (c = 129) {
+        if (c = String.backSpace()) {
             do Output.backSpace();
             return;
         }

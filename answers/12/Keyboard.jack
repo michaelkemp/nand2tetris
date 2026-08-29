@@ -57,7 +57,7 @@ class Keyboard {
         while (~(Keyboard.keyPressed() = 0)) {
         }
 
-        do Output.printChar(129); // backspace: erase the cursor square
+        do Output.printChar(String.backSpace()); // erase the cursor square
         do Output.printChar(c);
         return c;
     }
@@ -77,10 +77,10 @@ class Keyboard {
         let done = false;
         while (~done) {
             let c = Keyboard.readChar();
-            if (c = 128) { // newline - hardcoded, see Keyboard.md
+            if (c = String.newLine()) {
                 let done = true;
             } else {
-                if (c = 129) { // backspace
+                if (c = String.backSpace()) {
                     if (str.length() > 0) {
                         do str.eraseLastChar();
                     }

@@ -40,8 +40,8 @@ square (`Output.create(0, 63,63,63,63,63,63,63,63,63,0,0)`, in the
 skeleton). So before waiting for a key, this calls `Output.printChar(0)`,
 which draws that square and advances the cursor one column — a visible
 placeholder showing where the next character will land. Once a key is
-captured, `Output.printChar(129)` (the hardcoded backspace code — see
-`Output.md`) erases that square and moves the cursor back, immediately
+captured, `Output.printChar(String.backSpace())` erases that square and
+moves the cursor back, immediately
 before the real character is echoed in its place. No dedicated
 "show/hide cursor" function needed — just `printChar`/`backSpace`,
 already reused for the purpose they were built for.
@@ -51,8 +51,8 @@ already reused for the purpose they were built for.
 Prints `message`, then repeatedly calls `readChar` and reacts to what
 comes back:
 
-- `128` (newline) ends the loop and returns what's been typed so far.
-- `129` (backspace) removes the last character from the string being
+- `String.newLine()` ends the loop and returns what's been typed so far.
+- `String.backSpace()` removes the last character from the string being
   built (`str.eraseLastChar()`), if there is one.
 - Anything else gets appended (`str.appendChar(c)`).
 

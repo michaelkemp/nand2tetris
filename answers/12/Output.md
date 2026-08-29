@@ -63,12 +63,13 @@ function's job rather than duplicated in every caller.
 
 ## `printChar(c)`
 
-`128` and `129` are the Hack character set's non-printable newline and
-backspace codes (there's no `String.newLine()`/`String.backSpace()` to
-call yet, since `String` isn't implemented until later in this project
-sequence — these are hardcoded here and can be swapped for the real
-calls once `String` exists, with no behavior change). Both codes dispatch
-to `println`/`backSpace` instead of drawing a glyph.
+`String.newLine()`/`String.backSpace()` (`128`/`129`, the Hack character
+set's non-printable newline and backspace codes) dispatch to
+`println`/`backSpace` instead of drawing a glyph. (Originally hardcoded
+as bare `128`/`129` here, since `String` wasn't implemented yet at the
+point this file was written — swapped over once it was, with no behavior
+change; codegen and the runtime tests below were re-confirmed after the
+swap.)
 
 Every other character: draw its glyph at the current cursor position,
 then move the cursor one column right — a **plain field update**, not a

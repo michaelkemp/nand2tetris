@@ -11,54 +11,153 @@
  * string-oriented operations.
  */
 class String {
+    field Array chars;
+    field int capacity, len;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if (maxLength < 0) {
+            do Sys.error(14);
+        }
+        if (maxLength > 0) {
+            let chars = Array.new(maxLength);
+        }
+        let capacity = maxLength;
+        let len = 0;
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        if (capacity > 0) {
+            do chars.dispose();
+        }
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return len;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        if ((j < 0) | ~(j < len)) {
+            do Sys.error(15);
+        }
+        return chars[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        if ((j < 0) | ~(j < len)) {
+            do Sys.error(16);
+        }
+        let chars[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if (len = capacity) {
+            do Sys.error(17);
+        }
+        let chars[len] = c;
+        let len = len + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        if (len = 0) {
+            do Sys.error(18);
+        }
+        let len = len - 1;
+        return;
     }
 
-    /** Returns the integer value of this string, 
+    /** Returns the integer value of this string,
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int i, value, digit;
+        var boolean negative, done;
+
+        let value = 0;
+        let i = 0;
+        let negative = false;
+        let done = false;
+        if ((len > 0) & (chars[0] = 45)) { // '-'
+            let negative = true;
+            let i = 1;
+        }
+        while ((i < len) & (~done)) {
+            let digit = chars[i] - 48;
+            if ((digit < 0) | (digit > 9)) {
+                let done = true;
+            } else {
+                let value = (value * 10) + digit;
+                let i = i + 1;
+            }
+        }
+        if (negative) {
+            let value = -value;
+        }
+        return value;
+    }
+
+    // Recursively builds val's decimal digits into this string, most
+    // significant digit first - recurses on val/10 before appending the
+    // current last digit, so the append order comes out correct without
+    // needing to build the digits in reverse and flip them afterward.
+    // Assumes val is non-negative; setInt handles the sign separately.
+    method void int2String(int val) {
+        var int lastDigit, c;
+
+        let lastDigit = val - ((val / 10) * 10);
+        let c = 48 + lastDigit;
+        if (val < 10) {
+            do appendChar(c);
+        } else {
+            do int2String(val / 10);
+            do appendChar(c);
+        }
+        return;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var boolean negative;
+
+        if (capacity = 0) {
+            do Sys.error(19);
+        }
+        let len = 0;
+        let negative = false;
+        if (val < 0) {
+            let negative = true;
+            let val = -val;
+        }
+        if (negative) {
+            do appendChar(45); // '-'
+        }
+        do int2String(val);
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
