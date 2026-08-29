@@ -126,8 +126,8 @@ Either way, the chosen block's own `length` field gets set to exactly
 the caller.
 
 Running off the end of the list (`segment` reaches `0` without finding
-anything big enough) means the heap is exhausted: `do Sys.error(6)`, the
-same placeholder-until-`Sys`-exists pattern used in `Math.divide`.
+anything big enough) means the heap is exhausted: `do Sys.error(6)`,
+matching the reference OS's own error code for this case.
 
 ## `deAlloc(o)`
 

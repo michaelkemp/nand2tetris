@@ -67,11 +67,7 @@ class Math {
         var boolean negative;
         var int result;
         if (y = 0) {
-            // Placeholder until Sys is implemented: this matches the
-            // official OS's own guard (error code 3 = division by zero),
-            // but Sys.error is still an empty stub, so it's a no-op for
-            // now rather than actually halting the program.
-            do Sys.error(3);
+            do Sys.error(3); // division by zero - matches the official reference OS
         }
         let negative = ((x < 0) & (y > 0)) | ((x > 0) & (y < 0));
         let result = Math.divideNonNeg(Math.abs(x), Math.abs(y));

@@ -77,10 +77,7 @@ class Memory {
             let previous = off;
             let segment = heap[off + 1];
         }
-        // Placeholder until Sys is implemented: matches the reference OS's
-        // own error code (6 = heap overflow), but Sys.error is still an
-        // empty stub, so this is a no-op right now, not an actual halt.
-        do Sys.error(6);
+        do Sys.error(6); // heap overflow - matches the official reference OS
         return 0;
     }
 

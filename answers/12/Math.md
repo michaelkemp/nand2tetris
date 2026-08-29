@@ -83,10 +83,10 @@ non-negative `x`, `y < 0` is false (0 isn't negative), so it would recurse
 forever doubling 0. `divide` guards this itself with `if (y = 0) { do
 Sys.error(3); }`, matching the error code the official reference OS uses
 for this exact case (confirmed by reading `tools/OS/Math.vm` directly).
-This is currently a placeholder: `Sys.jack` is still an empty stub with no
-`return` at all, so right now this call would fall through into whatever
-function happens to follow it in memory rather than actually halting.
-Not something to exercise until `Sys` is implemented.
+At the time this was written, `Sys.jack` was still an empty stub, so this
+call was inert — it would have fallen through into whatever function
+happened to follow it in memory rather than actually halting. `Sys` has
+since been implemented (see `Sys.md`), so this now genuinely halts.
 
 ## `sqrt(x)` — slides 38, 43
 
