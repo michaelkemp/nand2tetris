@@ -1,0 +1,148 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Math.jack
+
+/** A library of commonly used mathematical functions.
+ *  All functions runs in O(n), where n is the number of bits used
+ *  for representing a two's complement integer value (16 in the Hack computer). 
+ *  Note: Jack compilers implement multiplication and division
+ *  using calls to OS functions in this class.
+ */
+class Math {
+    static int n;             // Number of bits used for representing a two's complement integer
+    static Array powersOfTwo; // Stores 2^0, 2^1, 2^2,..., 2^(n-1)
+
+    // Initializes the Math library.
+    function void init() {
+        var int i;
+        let n = 16;
+        let powersOfTwo = Array.new(n);
+        let powersOfTwo[0] = 1;
+        let i = 1;
+        while (i < n) {
+            // doubles via addition, not multiplication - multiply isn't built yet
+            let powersOfTwo[i] = powersOfTwo[i - 1] + powersOfTwo[i - 1];
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Returns true if the j'th bit of x is 1, false otherwise. */
+    function boolean bit(int x, int j) {
+        return ~((x & powersOfTwo[j]) = 0);
+    }
+
+    /** Returns the product of x and y.
+     *  When a Jack compiler detects the multiplication operator '*'
+     *  in an expression, it handles it by invoking this method.
+     *  Thus, in Jack, x * y and Math.multiply(x,y) return the same value.
+     */
+    function int multiply(int x, int y) {
+        // "Long multiplication": for each set bit i of y, add x<<i to the
+        // sum. Always runs n=16 iterations regardless of y's magnitude,
+        // vs. naive repeated addition which would run y times.
+        var int sum, shiftedX, i;
+        let sum = 0;
+        let shiftedX = x;
+        let i = 0;
+        while (i < n) {
+            if (Math.bit(y, i)) {
+                let sum = sum + shiftedX;
+            }
+            let shiftedX = shiftedX + shiftedX;
+            let i = i + 1;
+        }
+        return sum;
+    }
+
+    /** Returns the integer part of x / y.
+     *  When a Jack compiler detects the division operator '/'
+     *  an an expression, it handles it by invoking this method.
+     *  Thus, x/y and Math.divide(x,y) return the same value.
+     */
+    function int divide(int x, int y) {
+        // Divide |x| by |y|, then restore the sign - divideNonNeg only
+        // handles non-negative operands.
+        var boolean negative;
+        var int result;
+        if (y = 0) {
+            // Placeholder until Sys is implemented: this matches the
+            // official OS's own guard (error code 3 = division by zero),
+            // but Sys.error is still an empty stub, so it's a no-op for
+            // now rather than actually halting the program.
+            do Sys.error(3);
+        }
+        let negative = ((x < 0) & (y > 0)) | ((x > 0) & (y < 0));
+        let result = Math.divideNonNeg(Math.abs(x), Math.abs(y));
+        if (negative) {
+            return -result;
+        }
+        return result;
+    }
+
+    /** Returns x / y for x >= 0, y >= 0. Based on: x/y = 2*((x/2)/y). */
+    function int divideNonNeg(int x, int y) {
+        var int q;
+        // y < 0 here means 2*y overflowed on the way down through the
+        // recursion (y doubles each call) - that's the signal to stop,
+        // exactly as if y had simply grown past x.
+        if ((y > x) | (y < 0)) {
+            return 0;
+        }
+        let q = Math.divideNonNeg(x, y + y);
+        if ((x - ((2 * q) * y)) < y) {
+            return 2 * q;
+        }
+        return (2 * q) + 1;
+    }
+
+    /** Returns the integer part of the square root of x.
+    */
+    function int sqrt(int x) {
+        // Binary search for the largest y such that y*y <= x, one bit of
+        // y at a time from the top (j = n/2-1) down to 0 - y only ever
+        // needs n/2 bits since y*y must fit in n bits.
+        var int y, j, approx, approxSquared;
+        let y = 0;
+        let j = (n / 2) - 1;
+        while (~(j < 0)) {
+            let approx = y + powersOfTwo[j];
+            let approxSquared = approx * approx;
+            // approxSquared > 0 guards against approx*approx overflowing
+            // and wrapping negative, which would otherwise look <= x
+            if ((approxSquared > 0) & ~(approxSquared > x)) {
+                let y = approx;
+            }
+            let j = j - 1;
+        }
+        return y;
+    }
+
+    /** Returns the greater value.
+    */
+    function int max(int a, int b) {
+        if (a > b) {
+            return a;
+        }
+        return b;
+    }
+
+    /** Returns the smaller value.
+    */
+    function int min(int a, int b) {
+        if (a < b) {
+            return a;
+        }
+        return b;
+    }
+
+    /** Returns the absolute value of x
+    */
+    function int abs(int x) {
+        if (x < 0) {
+            return -x;
+        }
+        return x;
+    }
+}

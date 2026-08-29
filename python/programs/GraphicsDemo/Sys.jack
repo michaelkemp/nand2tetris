@@ -1,0 +1,40 @@
+// A trimmed Sys, used only by the standalone GraphicsDemo build. The
+// real answers/12/Sys.jack also initializes Output and Keyboard, but
+// the full 8-class OS doesn't fit in the real Hack computer's 32K-word
+// ROM alongside any program (see python/README.md) - this demo only
+// uses Screen/Math/Memory/Array, so its bootstrap only initializes
+// those, keeping the whole build comfortably under the ROM limit.
+class Sys {
+    function void init() {
+        do Memory.init();
+        do Math.init();
+        do Screen.init();
+        do Main.main();
+        do Sys.halt();
+        return;
+    }
+
+    function void halt() {
+        while (true) {
+        }
+        return;
+    }
+
+    function void wait(int duration) {
+        var int i;
+        while (duration > 0) {
+            let i = 50;
+            while (i > 0) {
+                let i = i - 1;
+            }
+            let duration = duration - 1;
+        }
+        return;
+    }
+
+    function void error(int errorCode) {
+        while (true) {
+        }
+        return;
+    }
+}

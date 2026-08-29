@@ -1,0 +1,9 @@
+class Main {
+    function void main() {
+        do Screen.setColor(true);
+        do Screen.drawCircle(256, 128, 80);
+        do Screen.drawRectangle(50, 50, 150, 100);
+        do Screen.drawLine(0, 0, 511, 255);
+        return;
+    }
+}

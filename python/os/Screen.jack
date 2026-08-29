@@ -1,0 +1,252 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+    static boolean color;
+    static Array twoToThe; // private bit-mask table, same idea as Math's - built
+                           // here rather than reusing Math's since that one's
+                           // private to Math and not part of its public API.
+                           // Sized 17, not 16: twoToThe[16] is deliberately let
+                           // overflow to 0 (doubling twoToThe[15] = -32768 wraps
+                           // to 0 in 16-bit two's complement), so that
+                           // drawHorizontal's "bits 0..15 set" mask
+                           // (twoToThe[endBit+1]-1) comes out to -1 even when
+                           // endBit is the last bit (15), with no special case.
+    static int screenBase, maxX, maxY; // reused across every drawXXX function,
+                                        // so named once here rather than
+                                        // repeating the literals at each site
+
+    /** Initializes the Screen. */
+    function void init() {
+        var int i;
+        let color = true;
+        let screenBase = 16384;
+        let maxX = 511;
+        let maxY = 255;
+        let twoToThe = Array.new(17);
+        let twoToThe[0] = 1;
+        let i = 1;
+        while (i < 17) {
+            let twoToThe[i] = twoToThe[i - 1] + twoToThe[i - 1];
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int i;
+        let i = 0;
+        // 8192 = 512*256/16: total 16-bit words in the screen memory map
+        while (i < 8192) {
+            do Memory.poke(screenBase + i, 0);
+            let i = i + 1;
+        }
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let color = b;
+        return;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        // address = 32*y + wordOffset, and the pixel is bit (x mod 16) of
+        // that word - wordOffset is computed once and reused for both,
+        // rather than dividing twice for the same value
+        var int wordOffset, bit;
+        if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
+            do Sys.error(7);
+        }
+        let wordOffset = x / 16;
+        let bit = x - (wordOffset * 16); // x mod 16 - Jack has no mod operator
+        do Screen.updateLocation(screenBase + (32 * y) + wordOffset, twoToThe[bit]);
+        return;
+    }
+
+    /** Sets or clears (per the current color) exactly the bits marked in
+     *  mask at the given screen word address. Shared by drawPixel's
+     *  wider sibling, drawHorizontal, so the peek/bitop/poke sequence
+     *  only has to be written once. */
+    function void updateLocation(int address, int mask) {
+        var int value;
+        let value = Memory.peek(address);
+        if (color) {
+            let value = value | mask;
+        } else {
+            let value = value & (~mask);
+        }
+        do Memory.poke(address, value);
+        return;
+    }
+
+    /** Draws a horizontal run of pixels from x=xa to x=xb (in either
+     *  order) on row y, using the current color. Unlike calling
+     *  drawPixel in a loop - which recomputes 32*y and x/16 from
+     *  scratch for every single pixel via Math.multiply/Math.divide -
+     *  this computes the row's base address and the two edge bit-masks
+     *  ONCE, then fills whole 16-bit words at a time in between. Verified
+     *  against the official reference OS's own Screen.drawHorizontal,
+     *  which uses this same word-batching strategy (see Screen.md). */
+    function void drawHorizontal(int y, int xa, int xb) {
+        var int left, right, startWord, endWord, startBit, endBit;
+        var int leftMask, rightMask, rowBase, word, lastWord;
+
+        let left = Math.min(xa, xb);
+        let right = Math.max(xa, xb);
+        let startWord = left / 16;
+        let startBit = left - (startWord * 16);
+        let endWord = right / 16;
+        let endBit = right - (endWord * 16);
+        let leftMask = ~(twoToThe[startBit] - 1);   // bits startBit..15 set
+        let rightMask = twoToThe[endBit + 1] - 1;   // bits 0..endBit set
+        let rowBase = screenBase + (32 * y) + startWord;
+
+        if (startWord = endWord) {
+            do Screen.updateLocation(rowBase, leftMask & rightMask);
+            return;
+        }
+
+        do Screen.updateLocation(rowBase, leftMask);
+        let lastWord = rowBase + (endWord - startWord);
+        let word = rowBase + 1;
+        while (word < lastWord) {
+            do Screen.updateLocation(word, -1);
+            let word = word + 1;
+        }
+        do Screen.updateLocation(lastWord, rightMask);
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        // The general diagonal algorithm below (walking absolute dx/dy
+        // with a running tie-break) breaks down for dx=0 or dy=0
+        // specifically: its tie-break always favors incrementing the
+        // second axis first, which immediately exceeds a 0 bound and
+        // cuts an axis-aligned line off after one pixel. So those two
+        // directions are handled as special cases first.
+        var int dx, dy, absDx, absDy, xStep, yStep, a, b, diff;
+        var int wordOffset, bit, mask, address, addressStep;
+
+        if ((x1 < 0) | (x1 > maxX) | (y1 < 0) | (y1 > maxY) |
+            (x2 < 0) | (x2 > maxX) | (y2 < 0) | (y2 > maxY)) {
+            do Sys.error(8);
+        }
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        if (dx = 0) {
+            // x is constant down the whole column, so its word-offset
+            // and bit-mask are computed once here rather than every
+            // iteration - each row still needs its own memory write
+            // (unlike a horizontal run, no two rows share a word), but
+            // there's no reason to keep re-deriving the same mask
+            let wordOffset = x1 / 16;
+            let bit = x1 - (wordOffset * 16);
+            let mask = twoToThe[bit];
+            let address = screenBase + (32 * y1) + wordOffset;
+            if (dy < 0) { let addressStep = -32; } else { let addressStep = 32; }
+            let b = 0;
+            let absDy = Math.abs(dy);
+            while (~(b > absDy)) {
+                do Screen.updateLocation(address, mask);
+                let address = address + addressStep;
+                let b = b + 1;
+            }
+            return;
+        }
+
+        if (dy = 0) {
+            // every pixel here shares one row - drawHorizontal fills
+            // the whole run word by word instead of pixel by pixel
+            do Screen.drawHorizontal(y1, x1, x2);
+            return;
+        }
+
+        if (dx < 0) { let xStep = -1; } else { let xStep = 1; }
+        if (dy < 0) { let yStep = -1; } else { let yStep = 1; }
+        let absDx = Math.abs(dx);
+        let absDy = Math.abs(dy);
+
+        let a = 0;
+        let b = 0;
+        let diff = 0;
+        while ((~(a > absDx)) & (~(b > absDy))) {
+            do Screen.drawPixel(x1 + (a * xStep), y1 + (b * yStep));
+            if (diff < 0) {
+                let a = a + 1;
+                let diff = diff + absDy;
+            } else {
+                let b = b + 1;
+                let diff = diff - absDx;
+            }
+        }
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        // Every row of a filled rectangle is exactly the drawHorizontal
+        // case, so this loops y and hands each row straight to
+        // drawHorizontal, skipping drawLine's per-row dx/dy branching
+        // and bounds re-check entirely - bounds are validated once here
+        // instead, up front.
+        var int y;
+
+        if ((x1 > x2) | (y1 > y2) | (x1 < 0) | (x2 > maxX) | (y1 < 0) | (y2 > maxY)) {
+            do Sys.error(9);
+        }
+
+        let y = y1;
+        while (~(y > y2)) {
+            do Screen.drawHorizontal(y, x1, x2);
+            let y = y + 1;
+        }
+        return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        // For each dy = 0..r, fill the horizontal chord at both y+dy and
+        // y-dy from x-halfWidth to x+halfWidth, where halfWidth =
+        // sqrt(r^2 - dy^2) - reusing one sqrt for both rows, since
+        // sqrt(r^2-dy^2) == sqrt(r^2-(-dy)^2) gives the same pixels either
+        // way. r*r must fit in a 16-bit int, which caps r at 181 - not
+        // checked here, since the screen itself caps any on-screen circle
+        // at a radius well below that anyway (see Screen.md).
+        var int dy, halfWidth, rSquared;
+
+        if ((x < 0) | (x > maxX) | (y < 0) | (y > maxY)) {
+            do Sys.error(12);
+        }
+        if (((x - r) < 0) | ((x + r) > maxX) | ((y - r) < 0) | ((y + r) > maxY)) {
+            do Sys.error(13);
+        }
+
+        let rSquared = r * r;
+        let dy = 0;
+        while (~(dy > r)) {
+            let halfWidth = Math.sqrt(rSquared - (dy * dy));
+            do Screen.drawLine(x - halfWidth, y + dy, x + halfWidth, y + dy);
+            if (dy > 0) {
+                do Screen.drawLine(x - halfWidth, y - dy, x + halfWidth, y - dy);
+            }
+            let dy = dy + 1;
+        }
+        return;
+    }
+}
