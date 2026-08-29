@@ -110,12 +110,15 @@ column 0, wraps to the last column of the previous row (unless already at
 
 ## `printString(s)`
 
-Standard `length`/`charAt` loop calling `printChar`. This is the one
-function that genuinely can't be runtime-verified yet: `String` is still
-an unimplemented stub later in this project sequence, so there's nothing
-to actually pass in as `s` until then. The implementation is written
-against the documented `String` API (`length()`, `charAt(int)`) and will
-be exercised once that class exists.
+Standard `length`/`charAt` loop calling `printChar`. At the time this
+file was first written, `String` was still an unimplemented stub later
+in this project sequence, so this couldn't be runtime-verified — it's
+since been implemented, and this is now confirmed: printed a
+`String.new(5)` holding `"HI"` at `(2, 3)` and checked both characters'
+bitmaps directly (including the second one landing correctly one column
+over, in the other half of its shared word — see `Screen.md`'s note on
+why 8-pixel-wide cells always land cleanly in one half of a 16-bit
+word).
 
 ## A note on the official reference
 
@@ -139,8 +142,7 @@ to match exactly regardless.
 - **Codegen**: matches the official `JackCompiler.sh` exactly, line for
   line (1772/1772 lines, no diff).
 - **Runtime**, linked against this project's own `Math`/`Memory`/`Array`/
-  `Screen` plus the official reference for `Keyboard`/`String`/`Sys`
-  (needed only for bootstrapping — not exercising their behavior):
+  `Screen`/`Keyboard`/`String` (official `Sys` only, for bootstrapping):
   - `printChar`'s glyph rendering checked bit-exact against the known
     font data for multiple characters (`'0'`, `'9'`, `'-'`, `'X'`, `'Z'`),
     including a character landing in the high byte of its word (odd
@@ -156,6 +158,9 @@ to match exactly regardless.
   - `printChar` at the last column, and `println` at the last row, both
     confirmed to wrap correctly (a character printed right after the
     wrap lands exactly at `(0, 0)` with the correct glyph).
+  - `printString` (once `String` existed): printed a two-character string
+    and confirmed both characters' bitmaps directly, including the
+    second one landing correctly in the other half of its shared word.
 
 Along the way, this also turned up and fixed a real, previously-latent
 bug in `answers/11/jackTokenizer.py`: the symbols-matching loop didn't
