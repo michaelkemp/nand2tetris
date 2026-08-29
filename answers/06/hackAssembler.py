@@ -151,7 +151,18 @@ class Assembler:
                 raise SyntaxError(f"Addressing value exceeds range: {command}")
         except ValueError:
             if cmd in self.VARIABLES:
-                address = f"{int(self.VARIABLES[cmd]):016b}"
+                resolved = int(self.VARIABLES[cmd])
+                if resolved >= 32768:
+                    # A label whose instruction address overflows the
+                    # 15-bit A-instruction field (typically: a ROM image
+                    # larger than the real Hack computer's 32K words) -
+                    # without this check the value silently gets encoded
+                    # with bit 15 set, which decodes as a C-instruction
+                    # instead of the intended jump target.
+                    raise SyntaxError(
+                        f"Addressing value exceeds range: {command} (resolved to {resolved})"
+                    )
+                address = f"{resolved:016b}"
             else: ## ADD NEW VARIABLE
                 if self.VARREGISTER < self.VARIABLES['SCREEN']:
                     self.VARIABLES[cmd] = self.VARREGISTER
